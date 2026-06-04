@@ -4,6 +4,7 @@ import { Suspense, lazy } from "react";
 import RouteError from "./shared/RouteError";
 import ChatLayout from "./shared/ChatLayout";
 import AuthLayout from "./shared/AuthLayout";
+import NotFound from "./shared/NotFound"
 import ProtectedRoute from "./features/auth/ProtectedRoute";
 import LogIn from "./features/auth/LogIn";
 
@@ -24,9 +25,9 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "login",
-        element: <LogIn />,
-      },
+        path : "*",
+        element : <NotFound/>
+      }
     ],
   },
   {

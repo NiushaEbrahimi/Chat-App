@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import background from "../../public/images/AuthBackground.jpeg"
+import background from "../../src/assets/images/AuthBackground.jpeg"
 
 export default function AuthLayout() {
   return (
