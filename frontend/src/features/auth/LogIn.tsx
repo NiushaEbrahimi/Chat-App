@@ -1,26 +1,41 @@
 import CrystalMist from "../../shared/CrystalMist"
+import Spinner from "../../shared/Spinner.tsx"
+
 import style from "../../assets/css/CrystalMist.module.css"
 import "../../assets/css/FormStyles.css"
-import { useForm } from "react-hook-form"
-import { useRef } from "react"
 
-type FormData ={
-    username : string,
-    password: string
-}
+import { useForm } from "react-hook-form"
+import { useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
+
+import { loginUser } from "../../api/auth"
+import type { LoginPayload } from "../../types/authTypes"
 
 export default function LogIn() {
-    const usernameRef = useRef(null)
-    const { 
+    const [loading, setLoading] = useState(false);
+    const emailRef = useRef(null)
+    const navigate = useNavigate();
+    const {     
         register, 
         handleSubmit, 
         formState: { errors }
-    } = useForm({
+    } = useForm<LoginPayload>({
         shouldUseNativeValidation: true,
     })
 
-    const onSubmit = (data : FormData) => {
-        console.log(data)
+    const onSubmit = (data : LoginPayload) => {
+        setLoading(true);
+        loginUser(data)
+            .then(() => {
+                console.log("Login successful");
+                navigate("/chat");
+            })
+            .catch((error) => {
+                console.error("Login failed:", error);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     }
 
     return (
@@ -29,21 +44,21 @@ export default function LogIn() {
                 <div className="flex gap-6 p-4 flex-col justify-center">
                     
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="username">Username</label>
+                        <label htmlFor="email">Email</label>
                         <input 
-                            {...register("username", { required: "Username is required" })}
+                            {...register("email", { required: "Email is required" })}
                             type="text" 
                             className={style.glassButton} 
-                            placeholder="Username" 
-                            id="username"
+                            placeholder="Email" 
+                            id="email"
                         />
-                        {errors.username && <p ref={usernameRef} className={`${"error"}`}>{errors.username.message}</p>}
+                        {errors.email && <p ref={emailRef} className={`${"error"}`}>{errors.email.message}</p>}
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <label htmlFor="password">Password</label>
                         <input 
-                            {...register("password", { required: true, minLength: 6 })}
+                            {...register("password", { required: "Password is required", minLength: 6 })}
                             type="password" 
                             className={style.glassButton} 
                             placeholder="Password" 
@@ -51,14 +66,17 @@ export default function LogIn() {
                         />
                     </div>
 
-                    <div className="w-fit">
+                    <div className="w-full flex justify-center">
                         <button 
                             type="submit" 
                             className={style.glassButton}
                             // TODO:
                             // onClick={()=>console.log(usernameRef.current?.classList.remove("error"))}
                         >
-                            Log In
+                            {loading 
+                            ? <Spinner/>
+                            : <p>Log in</p>
+                            }
                         </button>
                     </div>
                 </div>
