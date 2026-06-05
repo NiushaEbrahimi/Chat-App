@@ -8,6 +8,7 @@ export interface AuthState{
     token : string | null;
     isAuthenticated : boolean;
     refreshToken : string | null;
+    rateLimitUntil : number | null; 
 }
 
 export interface RegisterPayload {
