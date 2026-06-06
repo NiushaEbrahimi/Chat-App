@@ -27,3 +27,19 @@ export interface TokenResponse {
   access: string;
   refresh: string;
 }
+
+export interface SignUpPayload {
+  email: string,
+  username: string,
+  password: string,
+  password2: string,
+}
+
+export interface ForgotForm {
+  identifier: string
+}
+
+export interface ResetForm{
+  new_password: string,
+  new_password2: string
+}

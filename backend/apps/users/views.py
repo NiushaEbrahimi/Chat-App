@@ -3,13 +3,38 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from apps.ratelimit.decorators import ratelimit
 
 @ratelimit(rate='3/m', block=True)
 def token_view(request, *args, **kwargs):
     return TokenObtainPairView.as_view()(request, *args, **kwargs)
+
+class PasswordResetRequestView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.send_reset_email()
+        # always return 200 — never reveal if email exists
+        return Response(
+            {'detail': "If an account exists, you'll receive an email shortly."},
+            status=status.HTTP_200_OK
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'detail': 'Password reset successful.'})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()

@@ -7,6 +7,8 @@ import AuthLayout from "./shared/AuthLayout";
 import NotFound from "./shared/NotFound"
 import ProtectedRoute from "./features/auth/ProtectedRoute";
 import LogIn from "./features/auth/LogIn";
+import RegisterPage from "./features/auth/RegisterPage";
+import ForgotPasswordPage from "./features/auth/ForgotPasswordPage";
 
 const ChatConversionList = lazy(()=>import("./features/chat/ChatConversionList"))
 
@@ -39,6 +41,18 @@ const router = createBrowserRouter([
         path: "login",
         element: <LogIn />,
       },
+      {
+        path: "register",
+        element: <RegisterPage />,
+      },
+      {
+        path: "reset-password",
+        element: <ForgotPasswordPage/>
+      },
+      {
+        path: "reset-password",
+        element: <ForgotPasswordPage/>
+      }
     ],
   },
 ]);

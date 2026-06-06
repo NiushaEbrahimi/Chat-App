@@ -1,11 +1,26 @@
 from pathlib import Path
 from datetime import timedelta
+import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-h!c2-8c3@k@hpg)o@e4td^9j^1fcg6wm&qi3jl2n@xy1kva703'
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / '.env')
 
-DEBUG = True
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env.bool('DEBUG', default=False)
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = f'ChatApp <{env("EMAIL_HOST_USER")}>'
+
+FRONTEND_URL = env('FRONTEND_URL')
+
+PASSWORD_RESET_TIMEOUT = 3600
 
 ALLOWED_HOSTS = []
 
@@ -58,6 +73,7 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,       # gives a new refresh token on every refresh
     'BLACKLIST_AFTER_ROTATION': True,    # old refresh token becomes invalid
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'USERNAME_FIELD': 'identifier',
 }
 
 # CORS — allow React dev server
@@ -65,6 +81,10 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',   # Vite default port
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'apps.users.backends.EmailOrUsernameBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 ROOT_URLCONF = 'backend.urls'
 

@@ -26,6 +26,7 @@ distlib==0.4.0
 distro @ file:///C:/Users/dev-admin/perseverance-python-buildout/croot/distro_1729059153117/work
 Django==5.2.6
 django-cors-headers==4.9.0
+django-environ==0.13.0
 django-filter==25.2
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1

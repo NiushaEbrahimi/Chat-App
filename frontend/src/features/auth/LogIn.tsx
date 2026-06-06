@@ -6,7 +6,7 @@ import "../../assets/css/FormStyles.css"
 
 import { useForm, } from "react-hook-form"
 import { useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux";
 
 import { loginUser } from "../../api/auth"
@@ -103,6 +103,9 @@ export default function LogIn() {
                             }
                         </button>
                     </div>
+                    <Link to={"/auth/reset-password"} className=" text-center cursor-pointer hover:underline" style={{color : "var(--primary)"}}>
+                        <p>Forgot Password?</p>
+                    </Link>
                 </div>
             </form>
         </CrystalMist>
