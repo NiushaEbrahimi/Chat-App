@@ -8,7 +8,9 @@ import { registerUser } from "../../api/auth";
 import type { SignUpPayload } from "../../types/authTypes";
 import CrystalMist from "../../shared/CrystalMist";
 import style from "../../assets/css/CrystalMist.module.css"
+import Spinner from "../../shared/Spinner";
 
+// TODO: This form is pretty basic, we should add password strength meter and other quality of life features
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -81,7 +83,7 @@ const RegisterPage = () => {
                 </p>
                 <div className="w-full flex justify-center">
                     <button type="submit" disabled={isSubmitting} className={`${style.glassButton} mt-2`} >
-                    {isSubmitting ? "Creating account..." : "Create account"}
+                    {isSubmitting ? <Spinner/> : "Create account"}
                     </button>
                 </div>
             </form>

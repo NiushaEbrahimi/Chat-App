@@ -1,6 +1,6 @@
 import apiClient from "./client";
 import axios from "axios";
-import type { RegisterPayload, LoginPayload, TokenResponse } from "../types/authTypes";
+import type { RegisterPayload } from "../types/authTypes";
 
 export const requestPasswordReset = (identifier: string) =>
   axios.post(`${import.meta.env.VITE_API_URL}/api/auth/password-reset/`, { identifier });
@@ -15,8 +15,7 @@ export const confirmPasswordReset = (data: {
 export const registerUser = (data: RegisterPayload) =>
   axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register/`, data);
 
-// TODO: send identifier
-export const loginUser = (data: LoginPayload): Promise<{ data: TokenResponse }> =>
+export const loginUser = (data: { identifier: string; password: string }) =>
   axios.post(`${import.meta.env.VITE_API_URL}/api/auth/token/`, data);
 
 export const logoutUser = (refreshToken: string) =>

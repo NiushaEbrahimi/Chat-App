@@ -8,6 +8,7 @@ import { confirmPasswordReset } from "../../api/auth";
 import type { ResetForm } from "../../types/authTypes";
 import CrystalMist from "../../shared/CrystalMist";
 import style from "../../assets/css/CrystalMist.module.css";
+import Spinner from "../../shared/Spinner";
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ const ResetPasswordPage = () => {
         </div>
         <div className="w-full flex justify-center">
           <button type="submit" disabled={isSubmitting} className={`${style.glassButton} mt-2`}>
-            {isSubmitting ? "Resetting..." : "Reset password"}
+            {isSubmitting ? <Spinner/> : "Reset password"}
           </button>
         </div>
       </form>
