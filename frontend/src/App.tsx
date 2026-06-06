@@ -1,4 +1,4 @@
-import {createBrowserRouter , RouterProvider} from "react-router-dom"
+import {createBrowserRouter , Navigate, RouterProvider} from "react-router-dom"
 import { Suspense, lazy } from "react";
 
 import RouteError from "./shared/RouteError";
@@ -9,6 +9,7 @@ import ProtectedRoute from "./features/auth/ProtectedRoute";
 import LogIn from "./features/auth/LogIn";
 import RegisterPage from "./features/auth/RegisterPage";
 import ForgotPasswordPage from "./features/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./features/auth/ResetPasswordPage";
 
 const ChatConversionList = lazy(()=>import("./features/chat/ChatConversionList"))
 
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
     errorElement: <RouteError/>,
     children: [
       {
+        index: true,
+        element: <Navigate to="login" replace />,
+      },
+      {
         path: "login",
         element: <LogIn />,
       },
@@ -46,12 +51,16 @@ const router = createBrowserRouter([
         element: <RegisterPage />,
       },
       {
-        path: "reset-password",
+        path: "forget-password",
         element: <ForgotPasswordPage/>
       },
       {
         path: "reset-password",
-        element: <ForgotPasswordPage/>
+        element: <ResetPasswordPage/>
+      },
+      {
+        path : "*",
+        element : <NotFound/>
       }
     ],
   },

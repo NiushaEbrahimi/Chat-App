@@ -36,3 +36,17 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.translateLabel {
+    position: absolute;
+    top: 37px;
+    left: 20px;
+    z-index: 10;
+    transition: all 0.2s ease-in-out;
+}
+.labelPosition{
+    top: -7px;
+    left: 30px;
+    z-index: 10;
+    font-size: 1.3rem;
+}

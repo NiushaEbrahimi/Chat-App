@@ -2,5 +2,7 @@
 
 :root{
     --primary: #b38ddc;
+    --primary-faded: rgba(179, 141, 220, 0.4);
     --secondary: #a9c2eb;
+    --secondary-faded: rgba(169, 194, 235, 0.4);
 }

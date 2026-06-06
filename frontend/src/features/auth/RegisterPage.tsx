@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, Link } from "react-router-dom";
-import { registerUser } from "../../api/auth";
 import axios from "axios";
-import type { SignUpPayload } from "../../types/authTypes";
+import { useNavigate, Link } from "react-router-dom";
+import {TriangleAlert, User, Mail , Lock} from "lucide-react"
 
+import { registerUser } from "../../api/auth";
+import type { SignUpPayload } from "../../types/authTypes";
 import CrystalMist from "../../shared/CrystalMist";
 import style from "../../assets/css/CrystalMist.module.css"
-import {TriangleAlert} from "lucide-react"
+
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -33,42 +34,53 @@ const RegisterPage = () => {
   return (
     <CrystalMist header={<h1>Sign Up</h1>}>
         <div>
-
             {serverError && (
                 <div style={{ background: "var(--secondary)"}} className="flex text-black p-3 gap-2 rounded-xl">
                 {serverError} <TriangleAlert color="red"/>
                 </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 16 }} className="p-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="p-4 flex flex-col gap-4">
                 <div className="flex flex-col">
-                    <label>Email</label>
-                    <input type="email" {...register("email")} className={style.glassButton} placeholder="Email"/>
-                    {errors.email && <span style={errorStyle}>{errors.email.message}</span>}
+                    <label className="flex items-center">
+                        <Mail size={20} className="mr-2" />
+                        Email
+                    </label>
+                    <input type="email" {...register("email")} className={`${style.glassButton} mt-2`} placeholder="Email"/>
+                    {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
                 </div>
 
                 <div className="flex flex-col">
-                    <label>Username</label>
-                    <input type="text" {...register("username")} className={style.glassButton} placeholder="Username"/>
-                    {errors.username && <span style={errorStyle}>{errors.username.message}</span>}
+                    <label className="flex items-center">
+                        <User size={20} className="mr-2" />
+                        Username
+                    </label>
+                    <input type="text" {...register("username")} className={`${style.glassButton} mt-2`} placeholder="Username"/>
+                    {errors.username && <span className="text-red-500 text-sm">{errors.username.message}</span>}
                 </div>
 
                 <div className="flex flex-col">
-                    <label>Password</label>
-                    <input type="password" {...register("password")} className={style.glassButton} placeholder="Password"/>
-                    {errors.password && <span style={errorStyle}>{errors.password.message}</span>}
+                    <label className="flex items-center">
+                        <Lock size={20} className="mr-2" />
+                        Password
+                    </label>
+                    <input type="password" {...register("password")} className={`${style.glassButton} mt-2`} placeholder="Password"/>
+                    {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
                 </div>
 
                 <div className="flex flex-col">
-                    <label>Confirm password</label>
-                    <input type="password" {...register("password2")} className={style.glassButton} placeholder="Confirm Password"/>
-                    {errors.password2 && <span style={errorStyle}>{errors.password2.message}</span>}
+                    <label className="flex items-center">
+                        <Lock size={20} className="mr-2" />
+                        Confirm Password
+                    </label>
+                    <input type="password" {...register("password2")} className={`${style.glassButton} mt-2`} placeholder="Confirm Password"/>
+                    {errors.password2 && <span className="text-red-500 text-sm">{errors.password2.message}</span>}
                 </div>
                 <p className="text-center" style={{color : "var(--primary)"}}>
                     Already have an account? <Link to="/auth/login" className="hover:underline">Sign in</Link>
                 </p>
                 <div className="w-full flex justify-center">
-                    <button type="submit" disabled={isSubmitting} className={style.glassButton} >
+                    <button type="submit" disabled={isSubmitting} className={`${style.glassButton} mt-2`} >
                     {isSubmitting ? "Creating account..." : "Create account"}
                     </button>
                 </div>
@@ -77,7 +89,5 @@ const RegisterPage = () => {
     </CrystalMist>
   );
 };
-
-const errorStyle = { color: "#c00", fontSize: 12, marginTop: 4, display: "block" };
 
 export default RegisterPage;

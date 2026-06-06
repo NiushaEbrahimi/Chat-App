@@ -8,6 +8,33 @@ from django.utils.encoding import force_bytes, force_str
 from django.conf import settings
 from .emails import send_password_reset_email
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = 'identifier'
+
+    def validate(self, attrs):
+        identifier = attrs.get('identifier')
+        password = attrs.get('password')
+
+        user = authenticate(
+            request=self.context.get('request'),
+            username=identifier,
+            password=password,
+        )
+
+        if not user:
+            raise serializers.ValidationError(
+                {'detail': 'Invalid credentials.'},
+                code='authorization'
+            )
+
+        refresh = self.get_token(user)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     identifier = serializers.CharField()  # email or username
@@ -31,7 +58,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        reset_link = f"{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}"
+        reset_link = f"{settings.FRONTEND_URL}/auth/reset-password?uid={uid}&token={token}"
         send_password_reset_email(user, reset_link)
 
 

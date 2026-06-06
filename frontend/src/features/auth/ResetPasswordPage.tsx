@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { confirmPasswordReset } from "../../api/auth";
 import axios from "axios";
-import type { ResetForm } from "../../types/authTypes";
+import { TriangleAlert } from "lucide-react";
 
+import { confirmPasswordReset } from "../../api/auth";
+import type { ResetForm } from "../../types/authTypes";
+import CrystalMist from "../../shared/CrystalMist";
+import style from "../../assets/css/CrystalMist.module.css";
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
@@ -19,11 +22,22 @@ const ResetPasswordPage = () => {
   // invalid link — uid or token missing from URL
   if (!uid || !token) {
     return (
-      <div style={{ maxWidth: 400, margin: "80px auto", padding: "0 16px" }}>
-        <h1>Invalid link</h1>
-        <p style={{ color: "#555" }}>This reset link is invalid or has expired.</p>
-        <Link to="/forgot-password">Request a new one</Link>
+      <CrystalMist header={<h1>Reset password</h1>}>
+      <div 
+        className="p-4 m-2"
+      >
+        <h1 className="text-2xl flex flex-row" style={{ color: "var(--secondary)" }}>
+          <TriangleAlert size={28} className="mr-2" />
+          Invalid link
+        </h1>
+        <p style={{ color: "var(--secondary-faded)" }} className="mt-2">
+          This reset link is invalid or has expired.
+        </p>
+        <Link to="/auth/forget-password" style={{ color: "var(--primary)" }} className="mt-6 inline-block underline">
+          Request a new one
+        </Link>
       </div>
+      </CrystalMist>
     );
   }
 
@@ -31,7 +45,7 @@ const ResetPasswordPage = () => {
     setServerError(null);
     try {
       await confirmPasswordReset({ uid, token, ...data });
-      navigate("/login", { state: { message: "Password reset successful. Please sign in." } });
+      navigate("/auth/login", { state: { message: "Password reset successful. Please sign in." } });
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const detail = err.response?.data;
@@ -45,47 +59,44 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "80px auto", padding: "0 16px" }}>
-      <h1>Reset password</h1>
-      <p style={{ color: "#666", marginBottom: 24 }}>Enter your new password below.</p>
+    <CrystalMist header={<h1>Reset password</h1>}>
+    <div className="p-4 m-2">
+      <p className="mt-2" style={{ color: "var(--primary)" }}>Enter your new password below.</p>
 
       {serverError && (
-        <div style={{ background: "#fee", padding: 12, borderRadius: 6, marginBottom: 16, color: "#c00" }}>
+        <div 
+          style={{ background: "var(--secondary-faded)", color: "var(--primary)" }}
+          className="flex items-center p-3 gap-2 rounded-xl mt-4"
+        >
           {serverError} {" "}
-          <Link to="/forgot-password" style={{ color: "#c00" }}>Request a new link</Link>
+          <Link to="/auth/forget-password" style={{ color: "var(--primary)" }}>Request a new link</Link>
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <form 
+        onSubmit={handleSubmit(onSubmit)}
+        className="mt-6 flex flex-col gap-4"
+      >
         <div>
           <label>New password</label>
-          <input type="password" {...register("new_password")} style={inputStyle} />
-          {errors.new_password && <span style={errorStyle}>{errors.new_password.message}</span>}
+          <input type="password" {...register("new_password")} className={`${style.glassButton} mt-2 w-full`} />
+          {errors.new_password && <span className="text-red-500 text-sm mt-1">{errors.new_password.message}</span>}
         </div>
 
         <div>
           <label>Confirm new password</label>
-          <input type="password" {...register("new_password2")} style={inputStyle} />
-          {errors.new_password2 && <span style={errorStyle}>{errors.new_password2.message}</span>}
+          <input type="password" {...register("new_password2")} className={`${style.glassButton} mt-2 w-full`} />
+          {errors.new_password2 && <span className="text-red-500 text-sm mt-1">{errors.new_password2.message}</span>}
         </div>
-
-        <button type="submit" disabled={isSubmitting} style={buttonStyle}>
-          {isSubmitting ? "Resetting..." : "Reset password"}
-        </button>
+        <div className="w-full flex justify-center">
+          <button type="submit" disabled={isSubmitting} className={`${style.glassButton} mt-2`}>
+            {isSubmitting ? "Resetting..." : "Reset password"}
+          </button>
+        </div>
       </form>
     </div>
+    </CrystalMist>
   );
-};
-
-const inputStyle = {
-  display: "block", width: "100%", padding: "10px 12px",
-  border: "1px solid #ddd", borderRadius: 6, marginTop: 4,
-  fontSize: 14, boxSizing: "border-box" as const,
-};
-const errorStyle = { color: "#c00", fontSize: 12, marginTop: 4, display: "block" };
-const buttonStyle = {
-  padding: "12px", background: "#111", color: "#fff",
-  border: "none", borderRadius: 6, cursor: "pointer", fontSize: 15,
 };
 
 export default ResetPasswordPage;

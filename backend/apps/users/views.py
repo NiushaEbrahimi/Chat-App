@@ -3,13 +3,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
-from .serializers import RegisterSerializer, UserSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import RegisterSerializer, UserSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, CustomTokenObtainPairSerializer
 from apps.ratelimit.decorators import ratelimit
 
 @ratelimit(rate='3/m', block=True)
 def token_view(request, *args, **kwargs):
-    return TokenObtainPairView.as_view()(request, *args, **kwargs)
+    return CustomTokenObtainPairSerializer.as_view()(request, *args, **kwargs)
 
 class PasswordResetRequestView(APIView):
     permission_classes = (permissions.AllowAny,)
