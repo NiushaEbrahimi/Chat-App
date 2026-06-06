@@ -11,7 +11,7 @@ export const useAuth = () => {
     user,
     token,
     isAuthenticated,
-    login: (payload: { user:User; token: string }) => dispatch(login(payload)),
+    login: (payload: { user: User; token: string; refreshToken: string }) => dispatch(login(payload)),
     logout: () => dispatch(logout()),
   };
 };

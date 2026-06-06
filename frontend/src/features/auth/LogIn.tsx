@@ -12,7 +12,7 @@ import { User, Lock } from "lucide-react";
 
 import { loginUser } from "../../api/auth";
 import type { LoginPayload } from "../../types/authTypes";
-import { setRateLimit } from "../../store/slices/authSlice.ts";
+import { setRateLimit, login } from "../../store/slices/authSlice.ts";
 import type { RootState } from "../../store/index.ts";
 import CountDown from "./components/CountDown.tsx";
 
@@ -62,8 +62,9 @@ export default function LogIn() {
     setLoading(true);
 
     loginUser(data)
-      .then(() => {
+      .then((response) => {
         console.log("Login successful");
+        dispatch(login(response.data ?? response));
         navigate("/chat");
       })
       .catch((error) => {
