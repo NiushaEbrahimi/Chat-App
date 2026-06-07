@@ -1,17 +1,18 @@
 import {createBrowserRouter , Navigate, RouterProvider} from "react-router-dom"
 import { Suspense, lazy } from "react";
 
-import RouteError from "./shared/RouteError";
 import ChatLayout from "./shared/ChatLayout";
 import AuthLayout from "./shared/AuthLayout";
-import NotFound from "./shared/NotFound"
-import ProtectedRoute from "./features/auth/ProtectedRoute";
-import LogIn from "./features/auth/LogIn";
-import RegisterPage from "./features/auth/RegisterPage";
-import ForgotPasswordPage from "./features/auth/ForgotPasswordPage";
-import ResetPasswordPage from "./features/auth/ResetPasswordPage";
+import Loading from "./shared/Loading"
 
-const ChatConversionList = lazy(()=>import("./features/chat/ChatConversionList"))
+const ChatConversionList = lazy(() => import("./features/chat/ChatConversionList"));
+const RouteError = lazy(() => import("./shared/RouteError"));
+const NotFound = lazy(() => import("./shared/NotFound"));
+const ProtectedRoute = lazy(() => import("./features/auth/ProtectedRoute"));
+const LogIn = lazy(() => import("./features/auth/LogIn"));
+const RegisterPage = lazy(() => import("./features/auth/RegisterPage"))
+const ForgotPasswordPage = lazy(() => import("./features/auth/ForgotPasswordPage"))
+const ResetPasswordPage = lazy(() => import("./features/auth/ResetPasswordPage"))
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,9 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <Navigate to="chat" replace />,
+      },
+      {
         path: "/chat",
         element: (
           <ProtectedRoute>
@@ -69,7 +73,7 @@ const router = createBrowserRouter([
 
 export default function App(){
   return(
-    <Suspense fallback={"loading"}>
+    <Suspense fallback={<Loading/>}>
       <RouterProvider router={router}/>
     </Suspense>
   )
