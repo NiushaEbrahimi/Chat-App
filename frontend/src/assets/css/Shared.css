@@ -1,0 +1,48 @@
+.firstDot , .secondDot , .thirdDot{
+    animation: bounce 900ms ease-in-out infinite ;
+}
+.secondDot {
+    animation-delay: 300ms;
+}
+.thirdDot{
+    animation-delay: 600ms;
+}
+@keyframes bounce{
+    0%{
+        transform: translateY(0px);
+    }
+    20%{
+        transform: translateY(0px);
+    }
+    50%{
+        transform: translateY(-20px);
+    }
+    80%{
+        transform: translateY(0px);
+    }
+    100%{
+        transform: translateY(0px);
+    }
+}
+
+.linkBack:hover .backArrow{
+    animation: verticalBounce 900ms ease-in-out infinite ;
+}
+
+@keyframes verticalBounce{
+    0%{
+        transform: translateX(0px);
+    }
+    20%{
+        transform: translateX(0px);
+    }
+    50%{
+        transform: translateX(-10px);
+    }
+    80%{
+        transform: translateX(0px);
+    }
+    100%{
+        transform: translateX(0px);
+    }
+}
