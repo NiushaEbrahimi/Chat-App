@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Room, Message
 from .serializers import RoomSerializer, MessageSerializer
-
+from .pagination import MessageCursorPagination
 
 class RoomListCreateView(generics.ListCreateAPIView):
     """
@@ -29,6 +29,7 @@ class MessageListView(generics.ListAPIView):
     """
     serializer_class = MessageSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = MessageCursorPagination
 
     def get_queryset(self):
         room_id = self.kwargs['room_id']
