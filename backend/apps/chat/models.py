@@ -1,4 +1,3 @@
-# apps/chat/models.py
 import uuid
 from django.db import models
 from django.conf import settings
@@ -23,6 +22,8 @@ class Room(models.Model):
         related_name='created_rooms'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    avatar = models.ImageField(upload_to='room_avatars/', null=True, blank=True)
+    is_saved_messages = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name or f"DM ({self.id})"
@@ -31,6 +32,18 @@ class Room(models.Model):
         # this is the Redis channel group name for this room
         # all members of this room subscribe to this group
         return f"room_{self.id.hex}"
+    def get_avatar(self, requesting_user):
+        # saved messages → use a fixed default (or None, handle in frontend)
+        if self.is_saved_messages:
+            return None  # frontend shows a Bookmark icon instead
+
+        # DM → return the other person's avatar
+        if not self.is_group:
+            other = self.members.exclude(id=requesting_user.id).first()
+            return other.avatar.url if other and other.avatar else None
+
+        # group → return the group's own uploaded avatar
+        return self.avatar.url if self.avatar else None
 
 
 class Message(models.Model):

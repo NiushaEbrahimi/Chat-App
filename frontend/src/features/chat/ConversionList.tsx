@@ -2,26 +2,41 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setActiveRoom } from '../../store/slices/chatSlice';
 import type { RootState } from '../../store';
 import type { Room } from '../../types/chatTypes';
+import { Bookmark } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchSavedMessage } from '../../api/chat';
+import RoomAvatar from './components/RoomAvatar';
 
 const ConversationList = () => {
   const dispatch = useDispatch();
   const rooms = useSelector((s: RootState) => s.chat.rooms);
   const activeRoomId = useSelector((s: RootState) => s.chat.activeRoomId);
   const onlineUserIds = useSelector((s: RootState) => s.chat.onlineUserIds);
+  const currentUserId = useSelector((s: RootState) => s.auth.user?.id);
+
+  const { data: savedRoom } = useQuery({
+    queryKey: ['saved-messages-room'],
+    queryFn: () => fetchSavedMessage(),
+  })
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: '16px', borderBottom: '1px solid #eee', fontWeight: 600 }}>
-        Messages
+    <div className='flex flex-col h-full'>
+      <div className='flex justify-between items-center p-4 border-b border-gray-400 shadow'>
+        <h1 className='text-2xl font-semibold'>Chats</h1>
+        <span className='flex cursor-pointer' onClick={()=>savedRoom && dispatch(setActiveRoom(savedRoom.data.id))}>
+          <Bookmark/> saved
+        </span>
       </div>
       <div style={{ overflowY: 'auto', flex: 1 }}>
         {rooms.map((room: Room) => {
           const isActive = room.id === activeRoomId;
 
           // for DMs, show the other person's name
-          const displayName = room.is_group
+          const displayName = room.is_saved_messages
+          ? room.name
+          :room.is_group
             ? room.name
-            : room.members.find(m => m.id !== room.members[0]?.id)?.username ?? 'Unknown';
+            : room.members.find(m => m.id !== currentUserId)?.username ?? 'Unknown';
 
           // check if any member is online
           const hasOnlineMember = room.members.some(m => onlineUserIds.includes(m.id));
@@ -40,12 +55,11 @@ const ConversationList = () => {
                 gap: 10,
               }}
             >
-              {/* online indicator dot */}
-              <div style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: hasOnlineMember ? '#22c55e' : '#d1d5db',
-                flexShrink: 0,
-              }} />
+              
+              <div className='relative'>
+                <RoomAvatar room={room} currentUserId={currentUserId}/>
+                {hasOnlineMember && <div className='w-2 h-2 rounded-4xl bg-green-500 absolute bottom-0 right-0'></div>}
+              </div>
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 500, fontSize: 14 }}>{displayName}</div>

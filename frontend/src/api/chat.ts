@@ -12,3 +12,6 @@ export const fetchMessages = (roomId: string, pageParam?: string): Promise<{ dat
   pageParam
     ? apiClient.get(pageParam)
     : apiClient.get(`/api/chat/rooms/${roomId}/messages/`);
+
+export const fetchSavedMessage = (): Promise<{ data: Room }> =>
+  apiClient.get('/api/chat/rooms/saved/');

@@ -63,13 +63,10 @@ def ratelimit(key: Optional[Callable] = None, rate: str = "5/m", block: bool = T
             print(f"[ratelimit] _wrapped called for {func.__name__}")  # ADD THIS
             if cache is None:
                 return func(request, *args, **kwargs)
-            print("this")
             try:
-                print("hi")
                 key_fn = key if callable(key) else _default_keyfunc
                 key_val = key_fn(request, *args, **kwargs)
                 cache_key = f"rl:{func.__module__}.{func.__qualname__}:{key_val}:{rate}"
-                print("hello")
                 if not cache.add(cache_key, 1, timeout=period):
                     try:
                         count = cache.incr(cache_key)

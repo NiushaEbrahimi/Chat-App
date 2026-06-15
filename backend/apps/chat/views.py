@@ -5,6 +5,8 @@ from rest_framework.views import APIView
 from .models import Room, Message
 from .serializers import RoomSerializer, MessageSerializer
 from .pagination import MessageCursorPagination
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 class RoomListCreateView(generics.ListCreateAPIView):
     """
@@ -43,3 +45,20 @@ class MessageListView(generics.ListAPIView):
         return room.messages.select_related('sender').prefetch_related(
             'reads', 'reactions'
         ).order_by('-created_at')  # newest first for infinite scroll
+    
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def saved_messages_room(request):
+    room, created = Room.objects.get_or_create(
+        created_by=request.user,
+        is_saved_messages=True,
+        defaults={
+            'name': 'Saved Messages',
+        }
+    )
+    if created:
+        room.members.add(request.user)
+    
+    serializer = RoomSerializer(room, context={'request': request})
+    return Response(serializer.data)

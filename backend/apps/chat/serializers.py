@@ -52,19 +52,35 @@ class RoomSerializer(serializers.ModelSerializer):
         write_only=True,
         source='members'
     )
-    # last message preview for the conversation list sidebar
     last_message = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Room
-        fields = ('id', 'name', 'is_group', 'members', 'member_ids', 'last_message', 'created_at')
-        read_only_fields = ('id', 'created_at')
+    def get_avatar_url(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return None
+        url = obj.get_avatar(request.user)
+        if not url:
+            return None
+        # already an absolute URL (e.g. from user.avatar.url)
+        if url.startswith('http'):
+            return url
+        return request.build_absolute_uri(url)
 
     def get_last_message(self, obj):
-        last = obj.messages.last()
+        last = obj.messages.order_by('-created_at').first()  # fix: was .last() which is oldest
         if last:
             return MessageSerializer(last).data
         return None
+
+    class Meta:
+        model = Room
+        fields = (
+            'id', 'name', 'is_group', 'is_saved_messages',
+            'members', 'member_ids', 'last_message',
+            'created_at', 'avatar_url',  # avatar_url not avatar
+        )
+        read_only_fields = ('id', 'created_at')
 
     def create(self, validated_data):
         members = validated_data.pop('members', [])
@@ -73,6 +89,5 @@ class RoomSerializer(serializers.ModelSerializer):
             created_by=self.context['request'].user
         )
         room.members.set(members)
-        # always add the creator as a member
         room.members.add(self.context['request'].user)
         return room

@@ -35,4 +35,6 @@ export interface Room {
   members: ChatUser[];
   last_message: Message | null;
   created_at: string;
+  is_saved_messages: boolean,
+  avatar_url: string,
 }
