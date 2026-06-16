@@ -1,6 +1,23 @@
-node_modules/
-.env
-dist/
-build/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Django
+backend/.env
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.production
+
+# VS Code / OS
+.vscode/
 .DS_Store
-.vite/
+Thumbs.db

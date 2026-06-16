@@ -1,0 +1,16 @@
+import type { ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+
+export default function ProtectedRoute({ children }: { children: ReactNode }) {
+
+    const {isAuthenticated}= useAuth(); 
+    // const isAuthenticated = true
+    const location = useLocation();
+    console.log(isAuthenticated)
+    if (!isAuthenticated) {
+        return <Navigate to="/auth/login" state={{ from: location }} replace />;
+    }
+
+    return children;
+}
