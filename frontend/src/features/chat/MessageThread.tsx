@@ -1,4 +1,3 @@
-// src/features/chat/MessageThread.tsx
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -17,6 +16,7 @@ const MessageThread = ({ roomId }: Props) => {
   const dispatch = useDispatch();
   const { sendMessage } = useWebSocket();
   const messages = useSelector((s: RootState) => s.chat.messages[roomId] ?? []);
+  const activeRooType = useSelector((s: RootState) => s.chat.activeRoomType);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -57,11 +57,11 @@ const MessageThread = ({ roomId }: Props) => {
   }, [messages, sendMessage]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className='flex flex-col h-full'>
 
       {/* load more button — infinite scroll */}
       {hasNextPage && (
-        <div style={{ textAlign: 'center', padding: 8 }}>
+        <div className='text-center p-4'>
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
@@ -73,16 +73,18 @@ const MessageThread = ({ roomId }: Props) => {
       )}
 
       {/* message list */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div 
+        className='flex-1 overflow-y-auto p-10 flex flex-col gap-4'
+      >
         {messages.map(message => (
           <div
             key={message.id}
             data-message-id={message.id}   // IntersectionObserver reads this
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
+            className='flex flex-col items-end'
           >
-            <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>
+            {activeRooType !=="saved_message" ? <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>
               {message.sender.username}
-            </div>
+            </div> : <></>}
             <div style={{
               background: '#f1f1f1', padding: '8px 12px',
               borderRadius: 12, maxWidth: '70%', fontSize: 14,
@@ -91,11 +93,11 @@ const MessageThread = ({ roomId }: Props) => {
             </div>
 
             {/* read receipts */}
-            {message.reads.length > 0 && (
+            {activeRooType==="group" ? message.reads.length > 0 && (
               <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>
                 Read by {message.reads.map(r => r.user.username).join(', ')}
               </div>
-            )}
+            ) : <></>}
           </div>
         ))}
         <div ref={bottomRef} />

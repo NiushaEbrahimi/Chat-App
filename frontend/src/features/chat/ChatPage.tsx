@@ -29,11 +29,15 @@ const ChatPage = () => {
   }, [data, dispatch]);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <div style={{ width: 300, borderRight: '1px solid #eee', flexShrink: 0 }}>
+    <div 
+      className='flex h-screen overflow-hidden px-10 py-6 gap-6'
+    >
+      <div style={{ flexShrink: 0 }}
+      className='rounded-2xl border border-gray-300 w-80 bg-white'
+      >
         <ConversationList />
       </div>
-      <div style={{ flex: 1 }}>
+      <div className='flex-1 rounded-2xl border border-gray-300 bg-white'>
         {activeRoomId
           ? <MessageThread roomId={activeRoomId} />
           : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>

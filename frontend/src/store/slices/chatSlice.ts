@@ -11,6 +11,7 @@ interface ChatState {
   // messages stored per room: { roomId: Message[] }
   messages: Record<string, Message[]>;
   activeRoomId: string | null;
+  activeRoomType: "group" | "saved_message" | "user",
   // typing users per room: { roomId: TypingUser[] }
   typingUsers: Record<string, TypingUser[]>;
   // online user IDs stored in a set-like object
@@ -21,6 +22,7 @@ const initialState: ChatState = {
   rooms: [],
   messages: {},
   activeRoomId: null,
+  activeRoomType: "user",
   typingUsers: {},
   onlineUserIds: [],
 };
@@ -35,8 +37,9 @@ const chatSlice = createSlice({
       state.rooms = action.payload;
     },
 
-    setActiveRoom: (state, action: PayloadAction<string>) => {
-      state.activeRoomId = action.payload;
+    setActiveRoom: (state, action: PayloadAction<{ roomId:string, roomType: "group" | "saved_message" | "user"}>) => {
+      state.activeRoomId = action.payload.roomId;
+      state.activeRoomType = action.payload.roomType
     },
 
     // called when React Query fetches message history for a room

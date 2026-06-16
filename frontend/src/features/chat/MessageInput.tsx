@@ -54,7 +54,7 @@ const MessageInput = ({ roomId }: Props) => {
 
   return (
     <div style={{
-      padding: '12px 16px', borderTop: '1px solid #eee',
+      padding: '20px 24px', borderTop: '1px solid #eee',
       display: 'flex', gap: 8, alignItems: 'flex-end',
     }}>
       <textarea

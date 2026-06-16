@@ -27,7 +27,7 @@ const ConversationList = () => {
       {/* TODO: this should go to menu */}
       <div className='flex justify-between items-center p-4 border-b border-gray-400 shadow'>
         <h1 className='text-2xl font-semibold'>Chats</h1>
-        <span className='flex cursor-pointer' onClick={()=>savedRoom && dispatch(setActiveRoom(savedRoom.data.id))}>
+        <span className='flex  gap-2 cursor-pointer' onClick={()=>savedRoom && dispatch(setActiveRoom({roomId : savedRoom.data.id, roomType: "saved_message"}))}>
           <Bookmark/> saved
         </span>
       </div>
@@ -45,11 +45,15 @@ const ConversationList = () => {
 
           // check if any member is online
           const hasOnlineMember = room.members.some(m => onlineUserIds.includes(m.id));
+          const senderMessage = room.is_group ? `${room.last_message?.sender.username} : ` : room.is_saved_messages ? "You : " : <></>
 
           return (
             <div
               key={room.id}
-              onClick={() => dispatch(setActiveRoom(room.id))}
+              onClick={() => {
+                const roomType = room.is_group ? "group" : room.is_saved_messages ? "saved_message" : "user"
+                dispatch(setActiveRoom({roomId : room.id, roomType : roomType}))
+              }}
               style={{
                 padding: '12px 16px',
                 cursor: 'pointer',
@@ -73,7 +77,7 @@ const ConversationList = () => {
                     fontSize: 12, color: '#999',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                   }}>
-                    {room.last_message.sender.username}: {room.last_message.content}
+                    {senderMessage} {room.last_message.content}
                   </div>
                 )}
               </div>
