@@ -10,9 +10,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { User, Lock } from "lucide-react";
 
-import { loginUser } from "../../api/auth";
+import { getMe, loginUser } from "../../api/auth";
 import type { LoginPayload } from "../../types/authTypes";
-import { setRateLimit, login } from "../../store/slices/authSlice.ts";
+import { setRateLimit, login, updateToken } from "../../store/slices/authSlice.ts";
 import type { RootState } from "../../store/index.ts";
 import CountDown from "./components/CountDown.tsx";
 
@@ -58,33 +58,49 @@ export default function LogIn() {
     },
   });
 
-  const onSubmit = (data: LoginPayload) => {
+  const onSubmit = async (data: LoginPayload) => {
     setLoading(true);
 
-    loginUser(data)
-      .then((response) => {
-        console.log("Login successful");
-        dispatch(login(response.data ?? response));
-        navigate("/chat");
-      })
-      .catch((error) => {
-        if (error.response?.status === 401) {
-          setError("root", {
-            type: "manual",
-            message: "Invalid email or password",
-          });
-        } else if (error.response?.status === 429) {
-          dispatch(setRateLimit());
+    try {
+      const response = await loginUser(data);
+      const { access, refresh } = response.data;
 
-          setError("root", {
-            type: "manual",
-            message: "Too many requests. Please try again later.",
-          });
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      dispatch(
+        updateToken({
+          token: access,
+          refreshToken: refresh,
+        })
+      );
+
+      const meResponse = await getMe();
+      dispatch(
+        login({
+          user: meResponse.data,
+          token: access,
+          refreshToken: refresh,
+        })
+      );
+
+      navigate("/chat");
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number } };
+
+      if (axiosError.response?.status === 401) {
+        setError("root", {
+          type: "manual",
+          message: "Invalid email or password",
+        });
+      } else if (axiosError.response?.status === 429) {
+        dispatch(setRateLimit());
+
+        setError("root", {
+          type: "manual",
+          message: "Too many requests. Please try again later.",
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

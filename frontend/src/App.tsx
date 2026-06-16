@@ -3,9 +3,9 @@ import { Suspense, lazy } from "react";
 
 import ChatLayout from "./shared/ChatLayout";
 import AuthLayout from "./shared/AuthLayout";
-import Loading from "./shared/Loading"
+// import Loading from "./shared/Loading"
 
-const ChatConversionList = lazy(() => import("./features/chat/ChatConversionList"));
+const ChatPage = lazy(() => import("./features/chat/ChatPage"));
 const RouteError = lazy(() => import("./shared/RouteError"));
 const NotFound = lazy(() => import("./shared/NotFound"));
 const ProtectedRoute = lazy(() => import("./features/auth/ProtectedRoute"));
@@ -28,7 +28,7 @@ const router = createBrowserRouter([
         path: "/chat",
         element: (
           <ProtectedRoute>
-            <ChatConversionList />
+            <ChatPage />
           </ProtectedRoute>          
         ),
       },
@@ -45,7 +45,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="login" replace />,
+        element: <Navigate to="auth/login" replace />,
       },
       {
         path: "login",
@@ -73,7 +73,8 @@ const router = createBrowserRouter([
 
 export default function App(){
   return(
-    <Suspense fallback={<Loading/>}>
+    // <Suspense fallback={<Loading/>}>
+    <Suspense fallback={"loading"}>
       <RouterProvider router={router}/>
     </Suspense>
   )
