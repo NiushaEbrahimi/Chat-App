@@ -1,13 +1,29 @@
 import { type PayloadAction, createSlice } from "@reduxjs/toolkit";
 import type { User, AuthState } from "../../types/authTypes";
 
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  refreshToken: null,
-  rateLimitUntil: null,
+const getInitialAuthState = (): AuthState => {
+  const storedToken = localStorage.getItem('access_token') ?? localStorage.getItem('authToken');
+  const storedRefreshToken = localStorage.getItem('refresh_token') ?? (() => {
+    const authTokens = localStorage.getItem('authTokens');
+    if (!authTokens) return null;
+    try {
+      return JSON.parse(authTokens)?.refresh ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  const storedUser = localStorage.getItem('user');
+
+  return {
+    user: storedUser ? JSON.parse(storedUser) : null,
+    token: storedToken,
+    isAuthenticated: Boolean(storedToken),
+    refreshToken: storedRefreshToken,
+    rateLimitUntil: null,
+  };
 };
+
+const initialState: AuthState = getInitialAuthState();
 
 const authSlice = createSlice({
   name: "auth",
@@ -19,6 +35,10 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refreshToken;
       state.isAuthenticated = true;
       state.rateLimitUntil = null;
+
+      localStorage.setItem('access_token', action.payload.token);
+      localStorage.setItem('refresh_token', action.payload.refreshToken);
+      localStorage.setItem('user', JSON.stringify(action.payload.user));
     },
     logout: (state) => {
       state.user = null;
@@ -26,6 +46,19 @@ const authSlice = createSlice({
       state.refreshToken = null;
       state.isAuthenticated = false;
       state.rateLimitUntil = null;
+
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+    },
+    updateToken: (state, action: PayloadAction<{ token: string; refreshToken?: string }>) => {
+      state.token = action.payload.token;
+      localStorage.setItem('access_token', action.payload.token);
+
+      if (action.payload.refreshToken) {
+        state.refreshToken = action.payload.refreshToken;
+        localStorage.setItem('refresh_token', action.payload.refreshToken);
+      }
     },
     setRateLimit: (state) => {
       state.rateLimitUntil = Date.now() + 60_000;
@@ -36,5 +69,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { login, logout, setRateLimit, clearRateLimit } = authSlice.actions;
+export const { login, logout, updateToken , setRateLimit, clearRateLimit } = authSlice.actions;
 export default authSlice.reducer;

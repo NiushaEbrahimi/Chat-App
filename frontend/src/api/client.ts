@@ -1,13 +1,13 @@
 import axios from "axios";
 import { store } from "../store";
-import { login, logout } from "../store/slices/authSlice";
+import { logout, updateToken } from "../store/slices/authSlice";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: { "Content-Type": "application/json" },
 });
 
-
+// ─── Request Interceptor ────────────────────────────────────────────
 apiClient.interceptors.request.use((config) => {
   const token = store.getState().auth.token;
   if (token) {
@@ -16,7 +16,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-
+// ─── Refresh queue ──────────────────────────────────────────────────
 let isRefreshing = false;
 let failedQueue: { resolve: (value: string | null) => void; reject: (reason?: unknown) => void }[] = [];
 
@@ -25,7 +25,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
-
+// ─── Response Interceptor ───────────────────────────────────────────
 apiClient.interceptors.response.use(
   (response) => response,
 
@@ -33,24 +33,26 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     const requestUrl = originalRequest.url ?? "";
 
-    // not a 401 — throw it normally (404, 500, etc)
     if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
-    
-    // wrong credentials on login — do nothing, let the error bubble up to the form
+
     if (requestUrl.includes("/api/auth/token/") && !requestUrl.includes("refresh")) {
-        return Promise.reject(error);
+      return Promise.reject(error);
     }
 
-    // refresh token itself failed — logout immediately, don't retry
     if (requestUrl.includes("/api/auth/token/refresh/")) {
-        store.dispatch(logout());
-        window.location.href = "/login";
-        return Promise.reject(error);
+      store.dispatch(logout());
+      // window.location.href = "/auth/login";
+      return Promise.reject(error);
     }
 
-    // another request is already refreshing — join the queue
+    if (originalRequest._retry) {
+      store.dispatch(logout());
+      // window.location.href = "/auth/login";
+      return Promise.reject(error);
+    }
+
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -60,7 +62,6 @@ apiClient.interceptors.response.use(
       });
     }
 
-    // first 401 — start the refresh
     originalRequest._retry = true;
     isRefreshing = true;
 
@@ -71,11 +72,9 @@ apiClient.interceptors.response.use(
         { refresh: refreshToken }
       );
 
-      // save new access token to Redux
-      store.dispatch(login({
-        user: store.getState().auth.user!,
+      store.dispatch(updateToken({
         token: data.access,
-        refreshToken: data.refresh ?? refreshToken,
+        refreshToken: data.refresh ?? undefined,
       }));
 
       processQueue(null, data.access);
@@ -85,7 +84,7 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null);
       store.dispatch(logout());
-      window.location.href = "/login";
+      // window.location.href = "/auth/login";
       return Promise.reject(refreshError);
 
     } finally {
