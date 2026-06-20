@@ -3,7 +3,7 @@ import { Suspense, lazy } from "react";
 
 import ChatLayout from "./shared/ChatLayout";
 import AuthLayout from "./shared/AuthLayout";
-// import Loading from "./shared/Loading"
+import Loading from "./shared/Loading"
 
 const ChatPage = lazy(() => import("./features/chat/ChatPage"));
 const RouteError = lazy(() => import("./shared/RouteError"));
@@ -73,8 +73,8 @@ const router = createBrowserRouter([
 
 export default function App(){
   return(
-    // <Suspense fallback={<Loading/>}>
-    <Suspense fallback={"loading"}>
+    <Suspense fallback={<Loading/>}>
+    {/* <Suspense fallback={"loading"}> */}
       <RouterProvider router={router}/>
     </Suspense>
   )
