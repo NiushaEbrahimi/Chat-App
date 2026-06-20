@@ -1,7 +1,7 @@
 export interface User {
-    readonly id : string;
-    email : string;
-    username : string;
+  readonly id : string;
+  email : string;
+  username : string;
 }
 export interface AuthState{
     user : User | null;

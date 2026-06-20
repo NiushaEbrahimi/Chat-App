@@ -1,6 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { Bookmark, PlusCircle, X, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useUserSearch } from '../../hooks/useUserSearch';
 
 import { setActiveRoom } from '../../store/slices/chatSlice';
 import { setNewConvo, offNewConvo } from '../../store/slices/newConvo';
@@ -8,6 +10,9 @@ import type { RootState } from '../../store';
 import type { Room } from '../../types/chatTypes';
 import { fetchSavedMessage } from '../../api/chat';
 import RoomAvatar from './components/RoomAvatar';
+import Spinner from '../../shared/Spinner';
+
+import type { User } from '../../types/authTypes';
 
 const ConversationList = () => {
   const dispatch = useDispatch();
@@ -99,6 +104,11 @@ const ConversationList = () => {
 
 function AddNewConverstaion(){
   const dispatch = useDispatch()
+
+  const [query, setQuery] = useState('')
+  const { data, isLoading } = useUserSearch(query)
+  console.log(data)
+
   return(
     <main 
       className='w-screen h-screen z-1000 absolute top-0 left-0 flex justify-center items-center' 
@@ -112,8 +122,25 @@ function AddNewConverstaion(){
           <X/>
         </div>
         <div className='relative w-1/2'>
-          <input type="text" className='w-full border rounded-2xl p-2' placeholder='@...'/>
+          <input 
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            type="text" 
+            className='w-full border rounded-2xl p-2' 
+            placeholder='@...'
+          />
           <Search className='absolute top-2 right-2'/>
+        </div>
+        {isLoading && <Spinner/>}
+        <div>
+          {data?.map((user : User) => (
+            <div 
+              key={user.id} 
+              // onClick={() => onSelect(user.id)}
+            >
+              {user.username}
+            </div>
+          ))}
         </div>
       </section>
     </main>
