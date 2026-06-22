@@ -1,14 +1,14 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { Bookmark, PlusCircle, X, Search } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useUserSearch } from '../../hooks/useUserSearch';
 
-import { setActiveRoom } from '../../store/slices/chatSlice';
+import { setActiveRoom, setRooms } from '../../store/slices/chatSlice';
 import { setNewConvo, offNewConvo } from '../../store/slices/newConvo';
 import type { RootState } from '../../store';
 import type { Room } from '../../types/chatTypes';
-import { fetchSavedMessage } from '../../api/chat';
+import { fetchSavedMessage, createRoom } from '../../api/chat';
 import RoomAvatar from './components/RoomAvatar';
 import Spinner from '../../shared/Spinner';
 import UserAvatar from '../../shared/UserAvatar';
@@ -108,12 +108,41 @@ type User = {
   username : string
 }
 
+
 function AddNewConverstaion(){
   const dispatch = useDispatch()
 
   const [query, setQuery] = useState('')
   const { data, isLoading } = useUserSearch(query)
   console.log(data)
+  const queryClient = useQueryClient();
+  const rooms = useSelector((s: RootState) => s.chat.rooms);
+
+  const { mutate: startChat, isPending } = useMutation({
+  mutationFn: (userId: string) =>
+    createRoom({ is_group: false, member_ids: [userId] }),
+
+    onSuccess: (response) => {
+      const room = response.data;
+      console.log(rooms)
+      console.log("hello")
+      console.log(room)
+      // add to sidebar if it's a brand new room
+      const exists = rooms.some(r => r.id === room.id);
+      if (!exists) {
+        dispatch(setRooms([room, ...rooms]));
+      }
+
+      // open the room — this is the answer to your question
+      // we only know the roomId after the server responds
+      dispatch(setActiveRoom({ roomId: room.id, roomType: 'user' }));
+
+      // refresh the rooms list in the background
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+
+      dispatch(offNewConvo());
+    },
+  });
 
   return(
     <main 
@@ -140,24 +169,32 @@ function AddNewConverstaion(){
           </div>
           <div className=' w-full flex-1 mt-2 p-2'>
             {isLoading && <Spinner/>}
-            {data?.map((user : User) => (
-              <>
-                <div 
-                  key={user.id} 
-                  className='flex items-center gap-2 p-2 cursor-pointer'
+            {data?.map((user: User, index: number) => (
+              <div key={user.id}>
+                <div
+                  className='flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-50 rounded-lg'
                   onClick={() => {
-                    // dispatch()
-                    dispatch(offNewConvo())
-                    dispatch(setActiveRoom({roomId : , roomType: "saved_message"}))
+                    if (!isPending) startChat(user.id);
                   }}
                 >
-                  <UserAvatar avatar={user.avatar} inputSize={36}/>
-                  {user.username}
+                  <UserAvatar avatar={user.avatar} inputSize={36} />
+                  <div className='flex flex-col'>
+                    <span className='text-sm font-medium'>{user.username}</span>
+                    <span className='text-xs text-gray-400'>
+                      {user.is_online ? 'Online' : 'Offline'}
+                    </span>
+                  </div>
+                  {isPending && (
+                    <span className='ml-auto text-xs text-gray-400'>Opening...</span>
+                  )}
                 </div>
-                {/* TODO: fix this for only one item and the last one */}
-                <p className='w-full bg-black' style={{height:"1px"}}></p>
-              </>              
+                {/* divider — skip after last item */}
+                {index < data.length - 1 && (
+                  <p className='w-full bg-gray-100' style={{ height: '1px' }} />
+                )}
+              </div>
             ))}
+
           </div>
         </div>
       </section>
