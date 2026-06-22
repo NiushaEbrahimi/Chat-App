@@ -11,8 +11,7 @@ import type { Room } from '../../types/chatTypes';
 import { fetchSavedMessage } from '../../api/chat';
 import RoomAvatar from './components/RoomAvatar';
 import Spinner from '../../shared/Spinner';
-
-import type { User } from '../../types/authTypes';
+import UserAvatar from '../../shared/UserAvatar';
 
 const ConversationList = () => {
   const dispatch = useDispatch();
@@ -102,6 +101,13 @@ const ConversationList = () => {
   );
 };
 
+type User = {
+  avatar : null | string
+  id : string
+  is_online : boolean
+  username : string
+}
+
 function AddNewConverstaion(){
   const dispatch = useDispatch()
 
@@ -115,32 +121,44 @@ function AddNewConverstaion(){
       style={{backgroundColor : "rgba(255,255,255,0.7)"}}
     >
       <section className='w-1/2 h-2/3 bg-white border rounded-2xl shadow-2xl p-8 relative flex justify-center'>
-        <div 
-          className='absolute top-5 right-5 cursor-pointer rounded-2xl p-1 hover:border '
-          onClick={()=>{dispatch(offNewConvo())}}
-        >
-          <X/>
-        </div>
-        <div className='relative w-1/2'>
-          <input 
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            type="text" 
-            className='w-full border rounded-2xl p-2' 
-            placeholder='@...'
-          />
-          <Search className='absolute top-2 right-2'/>
-        </div>
-        {isLoading && <Spinner/>}
-        <div>
-          {data?.map((user : User) => (
-            <div 
-              key={user.id} 
-              // onClick={() => onSelect(user.id)}
-            >
-              {user.username}
-            </div>
-          ))}
+        <div className='w-full flex justify-center items-center flex-col'>
+          <div 
+            className='absolute top-5 right-5 cursor-pointer rounded-2xl p-1 hover:border '
+            onClick={()=>{dispatch(offNewConvo())}}
+          >
+            <X/>
+          </div>
+          <div className='relative w-1/2'>
+            <input 
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              type="text" 
+              className='w-full border rounded-2xl p-2' 
+              placeholder='@...'
+            />
+            <Search className='absolute top-2 right-2'/>
+          </div>
+          <div className=' w-full flex-1 mt-2 p-2'>
+            {isLoading && <Spinner/>}
+            {data?.map((user : User) => (
+              <>
+                <div 
+                  key={user.id} 
+                  className='flex items-center gap-2 p-2 cursor-pointer'
+                  onClick={() => {
+                    // dispatch()
+                    dispatch(offNewConvo())
+                    dispatch(setActiveRoom({roomId : , roomType: "saved_message"}))
+                  }}
+                >
+                  <UserAvatar avatar={user.avatar} inputSize={36}/>
+                  {user.username}
+                </div>
+                {/* TODO: fix this for only one item and the last one */}
+                <p className='w-full bg-black' style={{height:"1px"}}></p>
+              </>              
+            ))}
+          </div>
         </div>
       </section>
     </main>
