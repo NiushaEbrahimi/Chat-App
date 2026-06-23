@@ -6,12 +6,27 @@ interface TypingUser {
   username: string;
 }
 
+interface Meta {
+  id?: string;
+  username?: string;
+  avatar?: string | null;
+  is_online?: boolean;
+  name?: string | null;
+  avatar_url?: string;
+}
+
+type MetaType = Meta | null
+
 interface ChatState {
   rooms: Room[];
   // messages stored per room: { roomId: Message[] }
   messages: Record<string, Message[]>;
-  activeRoomId: string | null;
-  activeRoomType: "group" | "saved_message" | "user",
+  activeRoom: {
+    roomId: string | null;
+    roomType: "group" | "saved_message" | "user";
+    // optional metadata about the current conversation (other user or group)
+    meta?: MetaType ;
+  };
   // typing users per room: { roomId: TypingUser[] }
   typingUsers: Record<string, TypingUser[]>;
   // online user IDs stored in a set-like object
@@ -21,8 +36,7 @@ interface ChatState {
 const initialState: ChatState = {
   rooms: [],
   messages: {},
-  activeRoomId: null,
-  activeRoomType: "user",
+  activeRoom: { roomId: null, roomType: "user", meta: null },
   typingUsers: {},
   onlineUserIds: [],
 };
@@ -37,9 +51,10 @@ const chatSlice = createSlice({
       state.rooms = action.payload;
     },
 
-    setActiveRoom: (state, action: PayloadAction<{ roomId:string, roomType: "group" | "saved_message" | "user"}>) => {
-      state.activeRoomId = action.payload.roomId;
-      state.activeRoomType = action.payload.roomType
+    setActiveRoom: (state, action: PayloadAction<{ roomId: string; roomType: "group" | "saved_message" | "user"; meta?: MetaType }>) => {
+      state.activeRoom.roomId = action.payload.roomId;
+      state.activeRoom.roomType = action.payload.roomType;
+      state.activeRoom.meta = action.payload.meta ?? null;
     },
 
     // called when React Query fetches message history for a room
