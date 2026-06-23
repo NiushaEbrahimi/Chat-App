@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useInfiniteQuery } from '@tanstack/react-query';
+
 import { fetchMessages } from '../../api/chat';
 import { setMessages } from '../../store/slices/chatSlice';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -55,49 +56,54 @@ const MessageThread = ({ roomId }: Props) => {
     document.querySelectorAll('[data-message-id]').forEach(el => observer.observe(el));
     return () => observer.disconnect();
   }, [messages, sendMessage]);
-
+  // TODO: change the header style
   return (
-    <div className='flex flex-col h-full'>
+    <div className='flex h-full flex-col rounded-[28px] border border-[var(--border)] bg-[var(--secondary-faded)] shadow-inner shadow-[rgba(106,17,203,0.08)]'>
+      <div className='sticky top-0 z-10 overflow-hidden rounded-t-[28px] bg-[var(--primary)]/10 px-6 py-5 backdrop-blur-sm'>
+        <div className='flex items-center justify-between gap-4'>
+          <div>
+            <p className='text-sm font-semibold text-[var(--primary)]'>Conversation</p>
+            <p className='text-xs text-slate-500'>Live messages sync in real time</p>
+          </div>
+          <span className='rounded-full bg-[var(--primary-faded)] px-3 py-1 text-xs font-semibold text-[var(--primary)]'>
+            Chat
+          </span>
+        </div>
+      </div>
 
-      {/* load more button — infinite scroll */}
       {hasNextPage && (
-        <div className='text-center p-4'>
+        <div className='mx-auto my-4'>
           <button
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
-            style={{ fontSize: 12, color: '#666', background: 'none', border: 'none', cursor: 'pointer' }}
+            className='rounded-full border border-[var(--border)] bg-white/90 px-4 py-2 text-xs text-[var(--primary)] transition hover:bg-[var(--primary-faded)] disabled:cursor-not-allowed disabled:opacity-60'
           >
             {isFetchingNextPage ? 'Loading...' : 'Load older messages'}
           </button>
         </div>
       )}
 
-      {/* message list */}
-      <div 
-        className='flex-1 overflow-y-auto p-10 flex flex-col gap-4'
-      >
+      <div className='flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4'>
         {messages.map(message => (
           <div
             key={message.id}
-            data-message-id={message.id}   // IntersectionObserver reads this
-            className='flex flex-col items-end'
+            data-message-id={message.id}
+            className='flex flex-col items-end gap-2'
           >
-            {activeRooType !=="saved_message" ? <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>
-              {message.sender.username}
-            </div> : <></>}
-            <div style={{
-              background: '#f1f1f1', padding: '8px 12px',
-              borderRadius: 12, maxWidth: '70%', fontSize: 14,
-            }}>
+            {activeRooType === 'group' && (
+              <div className='text-[11px] text-[var(--primary)]'>
+                {message.sender.username}
+              </div>
+            )}
+            <div className='max-w-[70%] rounded-[24px] border border-[var(--border)] bg-white/90 px-4 py-3 text-sm text-slate-900 shadow-sm'>
               {message.content}
             </div>
 
-            {/* read receipts */}
-            {activeRooType==="group" ? message.reads.length > 0 && (
-              <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>
+            {activeRooType === 'group' && message.reads.length > 0 && (
+              <div className='text-[10px] text-[var(--primary)]/80'>
                 Read by {message.reads.map(r => r.user.username).join(', ')}
               </div>
-            ) : <></>}
+            )}
           </div>
         ))}
         <div ref={bottomRef} />

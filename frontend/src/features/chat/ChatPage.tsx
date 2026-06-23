@@ -29,21 +29,18 @@ const ChatPage = () => {
   }, [data, dispatch]);
 
   return (
-    <div 
-      className='flex h-screen overflow-hidden px-10 py-6 gap-6'
-    >
-      <div style={{ flexShrink: 0 }}
-      className='rounded-2xl border border-gray-300 w-80 bg-white'
-      >
+    <div className='flex h-screen overflow-hidden px-10 py-6 gap-6 bg-[var(--primary-faded)]'>
+      <div className='flex-shrink-0 w-80 rounded-[28px] border border-[var(--border)] bg-white/95 shadow-[0_18px_80px_-48px_rgba(106,17,203,0.35)]'>
         <ConversationList />
       </div>
-      <div className='flex-1 rounded-2xl border border-gray-300 bg-white'>
-        {activeRoomId
-          ? <MessageThread roomId={activeRoomId} />
-          : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
-              Select a conversation
-            </div>
-        }
+      <div className='flex-1 rounded-[28px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_18px_80px_-48px_rgba(106,17,203,0.2)]'>
+        {activeRoomId ? (
+          <MessageThread roomId={activeRoomId} />
+        ) : (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            Select a conversation
+          </div>
+        )}
       </div>
     </div>
   );

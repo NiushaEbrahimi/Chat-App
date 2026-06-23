@@ -23,17 +23,17 @@ const RoomAvatar = ({ room, currentUserId, size = 36 }: Props) => {
 
   if (avatar.type === 'initials') {
     return (
-      <div style={{ ...base, background: '#6366f1', color: '#fff' }}>
+      <div style={{ ...base, background: 'var(--primary)', color: '#fff' }}>
         {avatar.text}
       </div>
-    )
+    );
   }
 
   return (
-    <div style={{ ...base, background: '#e5e7eb', color: '#6b7280' }}>
+    <div style={{ ...base, background: 'var(--secondary-faded)', color: 'var(--primary)' }}>
       {avatar.name === 'bookmark' ? <Bookmark size={size * 0.5} /> : <Users size={size * 0.5} />}
     </div>
-  )
+  );
 }
 
 export default RoomAvatar

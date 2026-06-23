@@ -27,76 +27,68 @@ const ConversationList = () => {
   })
 
   return (
-    <div className='flex flex-col h-full'>
-      {/* TODO: this should go to menu */}
-      <div className='flex justify-between items-center p-4 border-b border-gray-400 shadow'>
-        <h1 className='text-2xl font-semibold'>Chats</h1>
-        <span className='flex  gap-2 cursor-pointer' onClick={()=>savedRoom && dispatch(setActiveRoom({roomId : savedRoom.data.id, roomType: "saved_message"}))}>
-          <Bookmark/> saved
-        </span>
+    <div className='flex h-full flex-col rounded-[28px] bg-[var(--surface)]'>
+      <div className='flex items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--primary)]/10 px-5 py-4 text-slate-700'>
+        <h1 className='text-2xl font-semibold text-[var(--primary)]'>Chats</h1>
+        <button
+          onClick={() => savedRoom && dispatch(setActiveRoom({ roomId: savedRoom.data.id, roomType: 'saved_message' }))}
+          className='inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/90 px-3 py-2 text-sm font-medium text-[var(--primary)] transition hover:bg-[var(--primary-faded)]'
+        >
+          <Bookmark className='h-4 w-4' />
+          saved
+        </button>
       </div>
 
-      <div style={{ overflowY: 'auto', flex: 1 }}>
+      <div className='flex-1 overflow-y-auto px-2'>
         {rooms.map((room: Room) => {
           const isActive = room.id === activeRoomId;
-
-          // for DMs, show the other person's name
           const displayName = room.is_saved_messages
-          ? room.name
-          :room.is_group
             ? room.name
-            : room.members.find(m => m.id !== currentUserId)?.username ?? 'Unknown';
-
-          // check if any member is online
+            : room.is_group
+              ? room.name
+              : room.members.find(m => m.id !== currentUserId)?.username ?? 'Unknown';
           const hasOnlineMember = room.members.some(m => onlineUserIds.includes(m.id));
-          const senderMessage = room.is_group ? `${room.last_message?.sender.username} : ` : room.is_saved_messages ? "You : " : <></>
+          const senderMessage = room.is_group ? `${room.last_message?.sender.username} : ` : room.is_saved_messages ? 'You : ' : <></>;
 
           return (
-            <div
+            <button
               key={room.id}
+              type='button'
               onClick={() => {
-                const roomType = room.is_group ? "group" : room.is_saved_messages ? "saved_message" : "user"
-                dispatch(setActiveRoom({roomId : room.id, roomType : roomType}))
+                const roomType = room.is_group ? 'group' : room.is_saved_messages ? 'saved_message' : 'user';
+                dispatch(setActiveRoom({ roomId: room.id, roomType }));
               }}
-              style={{
-                padding: '12px 16px',
-                cursor: 'pointer',
-                background: isActive ? '#f0f0f0' : 'transparent',
-                borderBottom: '1px solid #f5f5f5',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-              }}
+              className={`w-full rounded-[22px] px-4 py-3 text-left transition ${isActive ? 'bg-[var(--primary)]/10 shadow-sm' : 'hover:bg-white/80'}`}
             >
-              
-              <div className='relative'>
-                <RoomAvatar room={room} currentUserId={currentUserId}/>
-                {hasOnlineMember && <div className='w-2 h-2 rounded-4xl bg-green-500 absolute bottom-0 right-0'></div>}
+              <div className='flex items-center gap-3'>
+                <div className='relative'>
+                  <RoomAvatar room={room} currentUserId={currentUserId} />
+                  {hasOnlineMember && <span className='absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white' />}
+                </div>
+                <div className='min-w-0 flex-1'>
+                  <div className='text-sm font-medium text-slate-900'>{displayName}</div>
+                  {room.last_message && (
+                    <p className='truncate text-xs text-slate-500'>
+                      {senderMessage} {room.last_message.content}
+                    </p>
+                  )}
+                </div>
               </div>
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 500, fontSize: 14 }}>{displayName}</div>
-                {room.last_message && (
-                  <div style={{
-                    fontSize: 12, color: '#999',
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                  }}>
-                    {senderMessage} {room.last_message.content}
-                  </div>
-                )}
-              </div>
-            </div>
+            </button>
           );
         })}
-        {/* TODO: this should go to menu */}
-        <div 
-          onClick={()=>{dispatch(setNewConvo())}} 
-          className='w-full flex justify-center mt-5 gap-2 cursor-pointer'
+
+        <button
+          type='button'
+          onClick={() => dispatch(setNewConvo())}
+          className='mt-5 mb-4 inline-flex w-full items-center justify-center gap-2 rounded-[22px] border border-[var(--border)] bg-[var(--primary)]/10 px-4 py-3 text-sm font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-faded)]'
         >
-          <PlusCircle/> Add
-        </div>
+          <PlusCircle className='h-4 w-4' />
+          Add conversation
+        </button>
       </div>
-      {newConvo && <AddNewConverstaion/>}
+
+      {newConvo && <AddNewConverstaion />}
     </div>
   );
 };
@@ -145,56 +137,49 @@ function AddNewConverstaion(){
   });
 
   return(
-    <main 
-      className='w-screen h-screen z-1000 absolute top-0 left-0 flex justify-center items-center' 
-      style={{backgroundColor : "rgba(255,255,255,0.7)"}}
-    >
-      <section className='w-1/2 h-2/3 bg-white border rounded-2xl shadow-2xl p-8 relative flex justify-center'>
-        <div className='w-full flex justify-center items-center flex-col'>
-          <div 
-            className='absolute top-5 right-5 cursor-pointer rounded-2xl p-1 hover:border '
-            onClick={()=>{dispatch(offNewConvo())}}
-          >
-            <X/>
+    <main className='fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-6'>
+      <section className='w-full max-w-2xl rounded-[32px] border border-[var(--border)] bg-white/95 p-8 shadow-2xl'>
+        <div className='w-full flex flex-col items-center gap-6'>
+          <div className='absolute right-8 top-8 rounded-full border border-[var(--border)] bg-white p-2 text-slate-700 transition hover:bg-[var(--primary-faded)] cursor-pointer' onClick={() => { dispatch(offNewConvo()) }}>
+            <X className='h-4 w-4' />
           </div>
-          <div className='relative w-1/2'>
+          <div className='relative w-full max-w-md'>
             <input 
               value={query}
               onChange={e => setQuery(e.target.value)}
-              type="text" 
-              className='w-full border rounded-2xl p-2' 
-              placeholder='@...'
+              type='text' 
+              className='w-full rounded-[24px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
+              placeholder='Search users by @username'
             />
-            <Search className='absolute top-2 right-2'/>
+            <Search className='absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--primary)]' />
           </div>
-          <div className=' w-full flex-1 mt-2 p-2'>
-            {isLoading && <Spinner/>}
+          <div className='w-full flex-1 space-y-3 overflow-y-auto px-2'>
+            {isLoading && <Spinner />}
             {data?.map((user: User, index: number) => (
               <div key={user.id}>
-                <div
-                  className='flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-50 rounded-lg'
+                <button
+                  type='button'
+                  className='flex w-full items-center gap-3 rounded-[22px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-left transition hover:border-[var(--primary)] hover:bg-[var(--primary-faded)]'
                   onClick={() => {
                     if (!isPending) startChat(user.id);
                   }}
                 >
                   <UserAvatar avatar={user.avatar} inputSize={36} />
                   <div className='flex flex-col'>
-                    <span className='text-sm font-medium'>{user.username}</span>
-                    <span className='text-xs text-gray-400'>
+                    <span className='text-sm font-medium text-slate-900'>{user.username}</span>
+                    <span className='text-xs text-[var(--primary)]'>
                       {user.is_online ? 'Online' : 'Offline'}
                     </span>
                   </div>
                   {isPending && (
-                    <span className='ml-auto text-xs text-gray-400'>Opening...</span>
+                    <span className='ml-auto text-xs text-[var(--primary)]'>Opening...</span>
                   )}
-                </div>
-                {/* divider — skip after last item */}
+                </button>
                 {index < data.length - 1 && (
-                  <p className='w-full bg-gray-100' style={{ height: '1px' }} />
+                  <div className='h-px bg-[var(--border)]' />
                 )}
               </div>
             ))}
-
           </div>
         </div>
       </section>
