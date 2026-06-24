@@ -70,7 +70,7 @@ const MessageThread = ({ roomId }: Props) => {
   return (
     <div className='flex h-full flex-col rounded-[28px] border border-(--border) bg-(--secondary-faded) shadow-inner shadow-[rgba(106,17,203,0.08)]'>
 
-          <div className={`sticky top-5 z-10 rounded-[28px] flex justify-center items-center px-10 md:px-5`}>
+          <div className={`sticky h-0 top-12 z-10 rounded-[28px] flex justify-center items-center px-10`}>
             <div className='flex-1 flex justify-center'>
               <div className='w-full flex justify-center'>
                 <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
@@ -84,7 +84,7 @@ const MessageThread = ({ roomId }: Props) => {
             <div>
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>
-                  <UserAvatar avatar={activeRoom.meta?.avatar_url} inputSize={64} />
+                  <UserAvatar avatar={activeRoom.meta?.avatar_url} inputSize={64} username={activeRoom.meta?.username}/>
                 </div>
               </GlassCard>
             </div>
@@ -102,7 +102,7 @@ const MessageThread = ({ roomId }: Props) => {
         </div>
       )}
 
-      <div className='flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4'>
+      <div className='flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4 pt-25'>
         {messages.map(message => (
           <div
             key={message.id}

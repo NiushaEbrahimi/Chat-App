@@ -172,7 +172,7 @@ function AddNewConverstaion(){
                     if (!isPending) startChat(user.id);
                   }}
                 >
-                  <UserAvatar avatar={user.avatar} inputSize={36} />
+                  <UserAvatar avatar={user.avatar ?? undefined} inputSize={36} username={user.username} />
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-slate-900'>{user.username}</span>
                     <span className='text-xs text-(--primary)'>
