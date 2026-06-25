@@ -102,7 +102,7 @@ const MessageThread = ({ roomId }: Props) => {
         </div>
       )}
 
-      <div className='flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4 pt-25'>
+      <div className='flex-1 overflow-y-auto px-6 flex flex-col gap-4 pt-25 pb-6'>
         {messages.map(message => (
           <div
             key={message.id}
