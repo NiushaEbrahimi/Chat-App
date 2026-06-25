@@ -22,7 +22,7 @@ const RegisterPage = () => {
     setServerError(null);
     try {
       await registerUser(data);
-      navigate("/login", { state: { message: "Account created! Please log in." } });
+      navigate("/auth/login", { state: { message: "Account created! Please log in." } });
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const detail = err.response?.data;

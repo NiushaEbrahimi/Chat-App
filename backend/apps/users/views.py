@@ -3,9 +3,22 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
-from .serializers import RegisterSerializer, UserSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, CustomTokenObtainPairSerializer
+from .serializers import RegisterSerializer, UserSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, CustomTokenObtainPairSerializer, UserSummarySerializer
 from apps.ratelimit.decorators import ratelimit
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.filters import SearchFilter
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class UserSearchView(generics.ListAPIView):
+    serializer_class = UserSummarySerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = [SearchFilter]
+    search_fields = ['username', 'email']
+
+    def get_queryset(self):
+        return User.objects.exclude(id=self.request.user.id)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
