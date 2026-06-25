@@ -18,6 +18,7 @@ interface Meta {
 type MetaType = Meta | null
 
 interface ChatState {
+  theme: "dark" | "light"
   rooms: Room[];
   // messages stored per room: { roomId: Message[] }
   messages: Record<string, Message[]>;
@@ -34,6 +35,7 @@ interface ChatState {
 }
 
 const initialState: ChatState = {
+  theme: "light" ,
   rooms: [],
   messages: {},
   activeRoom: { roomId: null, roomType: "user", meta: null },
@@ -46,6 +48,9 @@ const chatSlice = createSlice({
   initialState,
   reducers: {
 
+    toggleTheme: (state) => {
+      state.theme = state.theme==="light" ? "dark" : "light";
+    },
     // called when React Query fetches the room list
     setRooms: (state, action: PayloadAction<Room[]>) => {
       state.rooms = action.payload;
@@ -144,7 +149,7 @@ const chatSlice = createSlice({
 });
 
 export const {
-  setRooms, setActiveRoom, setMessages,
+  toggleTheme, setRooms, setActiveRoom, setMessages,
   addMessage, setTyping, setUserOnline, addReadReceipt,
 } = chatSlice.actions;
 
