@@ -21,6 +21,40 @@ class RoomListCreateView(generics.ListCreateAPIView):
         return Room.objects.filter(
             members=self.request.user
         ).prefetch_related('members', 'messages').order_by('-created_at')
+    
+    def create(self, request, *args, **kwargs):
+        print("REQUEST DATA:", request.data)
+
+        is_group = request.data.get('is_group', False)
+        member_ids = request.data.get('member_ids', [])
+        print("is_group =", is_group)
+        print("member_ids =", member_ids)
+
+        if not is_group:
+            existing = Room.objects.filter(
+                is_group=False,
+                members=request.user
+            )
+            for member_id in member_ids:
+                existing = existing.filter(members__id=member_id)
+            print("Rooms for current user:")
+            print(
+                list(
+                    Room.objects.filter(
+                        is_group=False,
+                        members=request.user
+                    ).values("id")
+                )
+            )
+
+            print("Final queryset:")
+            print(list(existing.values("id")))
+            if existing.exists():
+                room = existing.first()
+                serializer = self.get_serializer(room)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return super().create(request, *args, **kwargs)
 
 
 class MessageListView(generics.ListAPIView):

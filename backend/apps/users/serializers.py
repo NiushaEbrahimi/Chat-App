@@ -11,6 +11,12 @@ from .emails import send_password_reset_email
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 
+class UserSummarySerializer(serializers.ModelSerializer):
+    """Lightweight user info — used inside messages and rooms."""
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'avatar', 'is_online')
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = 'identifier'
 

@@ -53,30 +53,19 @@ const MessageInput = ({ roomId }: Props) => {
   };
 
   return (
-    <div style={{
-      padding: '20px 24px', borderTop: '1px solid #eee',
-      display: 'flex', gap: 8, alignItems: 'flex-end',
-    }}>
+    <div className='flex items-end gap-3 rounded-b-[28px] border-t border-(--border) bg-white/90 px-6 py-5'>
       <textarea
         value={value}
         onChange={e => { setValue(e.target.value); handleTyping(); }}
         onKeyDown={handleKeyDown}
-        placeholder="Type a message... (Enter to send)"
+        placeholder='Type a message... (Enter to send)'
         rows={1}
-        style={{
-          flex: 1, padding: '10px 12px', borderRadius: 20,
-          border: '1px solid #ddd', resize: 'none',
-          fontSize: 14, outline: 'none', fontFamily: 'inherit',
-        }}
+        className='min-h-14 flex-1 resize-none rounded-[26px] border border-(--border) bg-(--surface) px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-(--primary) focus:ring-2 focus:ring-(--primary-faded)'
       />
       <button
         onClick={handleSend}
         disabled={!value.trim()}
-        style={{
-          padding: '10px 18px', background: '#111', color: '#fff',
-          border: 'none', borderRadius: 20, cursor: 'pointer',
-          fontSize: 14, opacity: value.trim() ? 1 : 0.4,
-        }}
+        className='rounded-[26px] bg-(--primary) px-5 py-3 text-sm font-semibold text-white transition hover:bg-(--secondary) disabled:cursor-not-allowed disabled:opacity-40'
       >
         Send
       </button>

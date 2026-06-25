@@ -10,7 +10,6 @@ interface Props {
 const TypingIndicator = ({ roomId }: Props) => {
   const { user } = useAuth();
   const typingUsers = useSelector((s: RootState) =>
-    // filter out the current user — you don't see your own typing indicator
     (s.chat.typingUsers[roomId] ?? []).filter(u => u.userId !== user?.id)
   );
 
@@ -21,7 +20,7 @@ const TypingIndicator = ({ roomId }: Props) => {
     : `${typingUsers.map(u => u.username).join(', ')} are typing...`;
 
   return (
-    <div style={{ padding: '4px 16px', fontSize: 12, color: '#999', height: 24 }}>
+    <div className='mx-6 mb-2 rounded-full bg-white/80 px-4 py-2 text-xs text-[var(--primary)] shadow-sm'>
       {text}
     </div>
   );
