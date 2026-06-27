@@ -1,10 +1,10 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { Bookmark, PlusCircle, Search, Menu, Cog, UserRoundPlus, EllipsisVertical } from 'lucide-react';
+import { Bookmark, PlusCircle, Search, Menu, Cog, UserRoundPlus, EllipsisVertical, Sun, Moon } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 
 import { useUserSearch } from '../../hooks/useUserSearch';
-import { setActiveRoom, setRooms } from '../../store/slices/chatSlice';
+import { setActiveRoom, setRooms, toggleTheme } from '../../store/slices/chatSlice';
 import { setNewConvo, offNewConvo } from '../../store/slices/newConvo';
 import type { RootState } from '../../store';
 import type { Room, ChatUser } from '../../types/chatTypes';
@@ -23,6 +23,8 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
     queryKey: ['saved-messages-room'],
     queryFn: () => fetchSavedMessage(),
   })
+  console.log("savedRoom")
+  console.log(savedRoom)
   const avatar = useSelector((s:RootState)=>s.auth.user?.avatar)
   const username = useSelector((s:RootState)=>s.auth.user?.username)
   const navigatge = useNavigate();
@@ -43,7 +45,7 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
           className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
         >
           <UserAvatar avatar={avatar ?? undefined} username={username} inputSize={30}/>
-          {username}
+          <p className='text-gray-600'>{username}</p>
         </button>
 
         <button
@@ -51,21 +53,21 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
           className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
         >
           <UserRoundPlus className='h-4 w-4'/>
-          add User
+          <p className='text-gray-600'>add User</p>
         </button>
 
         <div className='h-px bg-(--border)' />
 
         <button
           onClick={() => {
-              if(savedRoom)dispatch(setActiveRoom({ roomId: savedRoom.data.id, roomType: 'saved_message' }))
+              if(savedRoom)dispatch(setActiveRoom({ roomId: savedRoom.data.id, roomType: 'saved_message', meta: savedRoom.data }))
               setMenuDisplay(false)
             }
           }
           className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
         >
           <Bookmark className='h-4 w-4' />
-          Saved Messages
+          <p className='text-gray-600'>Saved Messages</p>
         </button>
 
         <button
@@ -74,7 +76,7 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
           className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
         >
           <PlusCircle className='h-4 w-4' />
-          New Conversation
+          <p className='text-gray-600'>New Conversation</p>
         </button>
 
         <div className='h-px bg-(--border)' />
@@ -84,7 +86,7 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
           className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
         >
           <Cog className='h-4 w-4' />
-          Settings
+          <p className='text-gray-600'>Settings</p>
         </button>
         
         <div
@@ -97,9 +99,9 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
             className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
           >
             <EllipsisVertical className='h-4 w-4'/> 
-              More
+            <p className='text-gray-600'>More</p>
           </button>
-          {moreDisplay && }
+          {moreDisplay && <MoreList/>}
         </div>
       </div>
     </div>
@@ -107,20 +109,22 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
 }
 
 const MoreList = () => {
+
   const theme = useSelector((s:RootState)=> s.chat.theme)
+  const dispatch = useDispatch();
+
   return(
     <div 
-      className='absolute top-8 left-full w-56 z-10 bg-white rounded-4xl p-2 shadow-lg '
+      className='absolute top-5 left-45 w-56 z-10 bg-white rounded-4xl p-2 shadow-lg '
     >
       <div className='relative flex flex-col gap-2'>
         <button
-        // TODO
-          onClick={() => {}}
+          onClick={() => {dispatch(toggleTheme())}}
           className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
         >
           {theme==="light" 
-          ?
-          :
+          ? <div className='flex items-center gap-2'><Sun/> Light Theme </div>
+          : <div className='flex items-center gap-2'><Moon/> Dark Theme</div>
           }
         </button>
       </div>
@@ -175,13 +179,13 @@ const ConversationList = () => {
               type='button'
               onClick={() => {
                 const roomType = room.is_group ? 'group' : room.is_saved_messages ? 'saved_message' : 'user';
-                const meta = room.is_group
-                  ? { name: room.name, avatar_url: room.avatar_url }
-                  : otherMember
-                    ? { id: otherMember.id, username: otherMember.username, avatar: otherMember.avatar, is_online: onlineUserIds.includes(otherMember.id) }
-                    : null;
+                // const meta = room.is_group
+                //   ? { name: room.name, avatar_url: room.avatar_url }
+                //   : otherMember
+                //     ? { id: otherMember.id, username: otherMember.username, avatar: otherMember.avatar, is_online: onlineUserIds.includes(otherMember.id) }
+                //     : null;
 
-                dispatch(setActiveRoom({ roomId: room.id, roomType, meta }));
+                dispatch(setActiveRoom({ roomId: room.id, roomType, meta: room }));
               }}
               className={`w-full rounded-[22px] px-4 py-3 text-left transition mt-2 ${isActive ? 'bg-(--primary)/10 shadow-sm' : 'hover:bg-white/80'}`}
             >
@@ -222,20 +226,17 @@ function AddNewConverstaion(){
 
   const [query, setQuery] = useState('')
   const { data, isLoading } = useUserSearch(query)
-  console.log(data)
   const queryClient = useQueryClient();
   const rooms = useSelector((s: RootState) => s.chat.rooms);
   const onlineUserIds = useSelector((s: RootState) => s.chat.onlineUserIds);
   const currentUserId = useSelector((s: RootState) => s.auth.user?.id);
 
   const { mutate: startChat, isPending } = useMutation({
-  mutationFn: (userId: string) =>
-    createRoom({ is_group: false, member_ids: [userId] }),
+  mutationFn: ({userId , username } : {userId:string, username:string}) =>
+    createRoom({ name: username, is_group: false, member_ids: [userId] }),
 
     onSuccess: (response) => {
       const room = response.data;
-      console.log("hello")
-      console.log(room)
       // add to sidebar if it's a brand new room
       const exists = rooms.some(r => r.id === room.id);
       if (!exists) {
@@ -278,7 +279,7 @@ function AddNewConverstaion(){
                   type='button'
                   className='flex w-full items-center gap-3 rounded-[22px] border border-(--border) bg-(--surface) px-4 py-3 text-left transition hover:border-(--primary) hover:bg-(--primary-faded)'
                   onClick={() => {
-                    if (!isPending) startChat(user.id);
+                    if (!isPending) startChat({ userId: user.id, username: user.username });
                   }}
                 >
                   <UserAvatar avatar={user.avatar ?? undefined} inputSize={36} username={user.username} />

@@ -21,6 +21,11 @@ const MessageThread = ({ roomId }: Props) => {
   const { sendMessage } = useWebSocket();
   const messages = useSelector((s: RootState) => s.chat.messages[roomId] ?? []) as Message[];
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
+  console.log("activeroom")
+  console.log(activeRoom)
+  console.log(activeRoom.meta)
+  console.log("roomtype")
+  console.log(activeRoom.roomType)
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery<
@@ -75,7 +80,7 @@ const MessageThread = ({ roomId }: Props) => {
               <div className='w-full flex justify-center'>
                 <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                   <div className='flex flex-col items-center text-center'>
-                    <p className='text-black font-semibold'>{activeRoom.meta?.username}</p>
+                    <p className='text-black font-semibold'>{activeRoom.roomType==="saved_message" ? activeRoom.meta?.name : activeRoom.meta?.username}</p>
                     <p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>
                   </div>
                 </GlassCard>
