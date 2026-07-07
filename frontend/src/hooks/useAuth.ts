@@ -5,12 +5,13 @@ import type { User } from "../types/authTypes";
 
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { user, token, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { user, token, isAuthenticated, refreshToken } = useSelector((state: RootState) => state.auth);
 
   return {
     user,
     token,
     isAuthenticated,
+    refreshToken,
     login: (payload: { user: User; token: string; refreshToken: string }) => dispatch(login(payload)),
     logout: () => dispatch(logout()),
   };

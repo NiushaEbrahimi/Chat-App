@@ -1,4 +1,5 @@
 import type { Room } from '../types/chatTypes'
+import { resolveAvatarUrl } from './resolveAvatarUrl'
 
 export type AvatarResult =
   | { type: 'image'; url: string }
@@ -12,12 +13,12 @@ export function getRoomAvatar(room: Room, currentUserId?: string): AvatarResult 
 
   if (!room.is_group) {
     const other = room.members.find(m => m.id !== currentUserId)
-    if (other?.avatar) return { type: 'image', url: other.avatar }
+    if (other?.avatar) return { type: 'image', url: resolveAvatarUrl(other.avatar) || other.avatar }
     return { type: 'initials', text: other?.username?.[0]?.toUpperCase() ?? '?' }
   }
 
   if (room.avatar_url) {
-    return { type: 'image', url: room.avatar_url }
+    return { type: 'image', url: resolveAvatarUrl(room.avatar_url) || room.avatar_url }
   }
 
   if (room.name) {

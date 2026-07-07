@@ -53,14 +53,14 @@ const MessageInput = ({ roomId }: Props) => {
   };
 
   return (
-    <div className='flex items-end gap-3 rounded-b-[28px] border-t border-(--border) bg-white/90 px-6 py-5'>
+    <div className='flex items-center justify-center gap-3 rounded-b-[28px] px-45 mb-12' style={{height:"0px"}}>
       <textarea
         value={value}
         onChange={e => { setValue(e.target.value); handleTyping(); }}
         onKeyDown={handleKeyDown}
         placeholder='Type a message... (Enter to send)'
         rows={1}
-        className='min-h-14 flex-1 resize-none rounded-[26px] border border-(--border) bg-(--surface) px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-(--primary) focus:ring-2 focus:ring-(--primary-faded)'
+        className='min-h-14 flex-1 resize-none rounded-[26px] border border-(--border) bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-(--primary) focus:ring-2 focus:ring-(--primary-faded)'
       />
       <button
         onClick={handleSend}

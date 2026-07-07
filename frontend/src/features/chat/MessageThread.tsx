@@ -6,11 +6,13 @@ import GlassCard from '../../shared/GlassCard';
 import { fetchMessages } from '../../api/chat';
 import { setMessages } from '../../store/slices/chatSlice';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { useTextSize } from '../../hooks/useTextSize';
 import MessageInput from './MessageInput';
 import TypingIndicator from './TypingIndicator';
 import type { Message } from '../../types/chatTypes';
 import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
+import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 
 interface Props {
   roomId: string;
@@ -19,8 +21,14 @@ interface Props {
 const MessageThread = ({ roomId }: Props) => {
   const dispatch = useDispatch();
   const { sendMessage } = useWebSocket();
+  const { className: textSizeClass } = useTextSize();
   const messages = useSelector((s: RootState) => s.chat.messages[roomId] ?? []) as Message[];
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
+  console.log("activeroom")
+  console.log(activeRoom)
+  console.log(activeRoom.meta)
+  console.log("roomtype")
+  console.log(activeRoom.roomType)
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery<
@@ -75,7 +83,7 @@ const MessageThread = ({ roomId }: Props) => {
               <div className='w-full flex justify-center'>
                 <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                   <div className='flex flex-col items-center text-center'>
-                    <p className='text-black font-semibold'>{activeRoom.meta?.username}</p>
+                    <p className='text-black font-semibold'>{activeRoom.roomType==="saved_message" ? activeRoom.meta?.name : activeRoom.meta?.username}</p>
                     <p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>
                   </div>
                 </GlassCard>
@@ -84,7 +92,7 @@ const MessageThread = ({ roomId }: Props) => {
             <div>
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>
-                  <UserAvatar avatar={activeRoom.meta?.avatar_url} inputSize={64} username={activeRoom.meta?.username}/>
+                  <UserAvatar avatar={resolveAvatarUrl(activeRoom.meta?.avatar_url)} inputSize={64} username={activeRoom.meta?.username}/>
                 </div>
               </GlassCard>
             </div>
@@ -102,7 +110,7 @@ const MessageThread = ({ roomId }: Props) => {
         </div>
       )}
 
-      <div className='flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4 pt-25'>
+      <div className='flex-1 overflow-y-auto px-6 flex flex-col gap-4 pt-25 pb-6'>
         {messages.map(message => (
           <div
             key={message.id}
@@ -114,7 +122,7 @@ const MessageThread = ({ roomId }: Props) => {
                 {message.sender.username}
               </div>
             )}
-            <div className='max-w-[70%] rounded-3xl border border-(--border) bg-white/90 px-4 py-3 text-sm text-slate-900 shadow-sm'>
+            <div className={`max-w-[70%] rounded-3xl border border-(--border) bg-white/90 px-4 py-3 ${textSizeClass} text-slate-900 shadow-sm`}>
               {message.content}
             </div>
 
