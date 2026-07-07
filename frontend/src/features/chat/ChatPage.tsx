@@ -5,13 +5,20 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchRooms } from '../../api/chat';
 import { setRooms } from '../../store/slices/chatSlice';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { useThemeInitializer } from '../../hooks/useThemeInitializer';
 import ConversationList from './ConversionList';
 import MessageThread from './MessageThread';
 import type { RootState } from '../../store';
+import ProfileEdit from './ProfileEdit';
+import Settings from './Settings';
 
 const ChatPage = () => {
   const dispatch = useDispatch();
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
+  const activePanel = useSelector((s: RootState) => s.ui.openPanel );
+
+  // Initialize theme on mount and when it changes
+  useThemeInitializer();
 
   // initialise WebSocket for the whole session
   // hook lives here so it's always connected while on chat page
@@ -34,7 +41,16 @@ const ChatPage = () => {
         <ConversationList />
       </div>
       <div className='flex-1 rounded-[28px] border border-(--border) bg-(--surface) shadow-[0_18px_80px_-48px_rgba(106,17,203,0.2)]'>
-        {activeRoom.roomId ? (
+        {activePanel === 'profile' ? (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            <ProfileEdit/>
+          </div>
+        ) : activePanel === 'settings' ? (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            <Settings/>
+          </div>
+        ) :
+        activeRoom.roomId ? (
           <MessageThread roomId={activeRoom.roomId} />
         ) : (
           <div className='flex h-full items-center justify-center text-slate-500'>

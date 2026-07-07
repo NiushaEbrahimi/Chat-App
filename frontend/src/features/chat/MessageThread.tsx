@@ -6,6 +6,7 @@ import GlassCard from '../../shared/GlassCard';
 import { fetchMessages } from '../../api/chat';
 import { setMessages } from '../../store/slices/chatSlice';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { useTextSize } from '../../hooks/useTextSize';
 import MessageInput from './MessageInput';
 import TypingIndicator from './TypingIndicator';
 import type { Message } from '../../types/chatTypes';
@@ -19,6 +20,7 @@ interface Props {
 const MessageThread = ({ roomId }: Props) => {
   const dispatch = useDispatch();
   const { sendMessage } = useWebSocket();
+  const { className: textSizeClass } = useTextSize();
   const messages = useSelector((s: RootState) => s.chat.messages[roomId] ?? []) as Message[];
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
   console.log("activeroom")
@@ -119,7 +121,7 @@ const MessageThread = ({ roomId }: Props) => {
                 {message.sender.username}
               </div>
             )}
-            <div className='max-w-[70%] rounded-3xl border border-(--border) bg-white/90 px-4 py-3 text-sm text-slate-900 shadow-sm'>
+            <div className={`max-w-[70%] rounded-3xl border border-(--border) bg-white/90 px-4 py-3 ${textSizeClass} text-slate-900 shadow-sm`}>
               {message.content}
             </div>
 
