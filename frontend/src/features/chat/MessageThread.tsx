@@ -12,6 +12,7 @@ import TypingIndicator from './TypingIndicator';
 import type { Message } from '../../types/chatTypes';
 import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
+import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 
 interface Props {
   roomId: string;
@@ -91,7 +92,7 @@ const MessageThread = ({ roomId }: Props) => {
             <div>
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>
-                  <UserAvatar avatar={activeRoom.meta?.avatar_url} inputSize={64} username={activeRoom.meta?.username}/>
+                  <UserAvatar avatar={resolveAvatarUrl(activeRoom.meta?.avatar_url)} inputSize={64} username={activeRoom.meta?.username}/>
                 </div>
               </GlassCard>
             </div>

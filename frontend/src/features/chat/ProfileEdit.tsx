@@ -5,6 +5,7 @@ import { updateMe, getMe } from '../../api/auth';
 import UserAvatar from '../../shared/UserAvatar';
 import { useDispatch } from 'react-redux';
 import { login } from '../../store/slices/authSlice';
+import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 
 export default function ProfileEdit() {
   const { user } = useAuth();
@@ -22,18 +23,22 @@ export default function ProfileEdit() {
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      const data = new FormData();
-      
-      if (selectedFile) {
-        data.append('avatar', selectedFile);
-      }
-      
-      if (formData.username !== user?.username) {
-        data.append('username', formData.username);
+      // Only update if something changed
+      if (!selectedFile && formData.username === user?.username) {
+        throw new Error('No changes to save');
       }
 
-      if (selectedFile || formData.username !== user?.username) {
+      // Use FormData only when we have a file
+      if (selectedFile) {
+        const data = new FormData();
+        data.append('avatar', selectedFile);
+        if (formData.username !== user?.username) {
+          data.append('username', formData.username);
+        }
         await updateMe(data);
+      } else if (formData.username !== user?.username) {
+        // For username-only changes, send as JSON
+        await updateMe({ username: formData.username });
       }
 
       const response = await getMe();
@@ -111,7 +116,7 @@ export default function ProfileEdit() {
             title='Click to change avatar'
           >
             <UserAvatar
-              avatar={(avatarPreview || user?.avatar || undefined) as string | undefined}
+              avatar={resolveAvatarUrl(avatarPreview || user?.avatar || undefined)}
               inputSize={100}
               username={user?.username}
             />
@@ -129,57 +134,60 @@ export default function ProfileEdit() {
           />
           {errors.avatar && <span className='text-red-500 text-sm font-medium'>{errors.avatar}</span>}
         </div>
+        <div className='flex flex-col gap-4 px-20'>
+            {/* Username Field */}
+            <div className='flex flex-col gap-2'>
+            <label htmlFor='username' className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>
+                Username
+            </label>
+            <input
+                id='username'
+                type='text'
+                name='username'
+                value={formData.username}
+                onChange={handleInputChange}
+                className={`px-4 py-3 rounded-[14px] border-2 bg-white text-(--primary) placeholder:text-gray-400 transition focus:outline-none focus:ring-2 focus:ring-(--primary-faded) ${
+                errors.username ? 'border-red-500 bg-red-50' : 'border-(--border) focus:border-(--primary)'
+                }`}
+                placeholder='Enter your username'
+            />
+            {errors.username && <span className='text-red-500 text-sm font-medium'>{errors.username}</span>}
+            </div>
 
-        {/* Username Field */}
-        <div className='flex flex-col gap-2'>
-          <label htmlFor='username' className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>
-            Username
-          </label>
-          <input
-            id='username'
-            type='text'
-            name='username'
-            value={formData.username}
-            onChange={handleInputChange}
-            className={`px-4 py-3 rounded-[14px] border-2 bg-white text-(--primary) placeholder:text-gray-400 transition focus:outline-none focus:ring-2 focus:ring-(--primary-faded) ${
-              errors.username ? 'border-red-500 bg-red-50' : 'border-(--border) focus:border-(--primary)'
-            }`}
-            placeholder='Enter your username'
-          />
-          {errors.username && <span className='text-red-500 text-sm font-medium'>{errors.username}</span>}
+            {/* Email Field (Read-only) */}
+            <div className='flex flex-col gap-2'>
+            <label htmlFor='email' className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>
+                Email
+            </label>
+            <input
+                id='email'
+                type='email'
+                value={user?.email || ''}
+                disabled
+                className='px-4 py-3 rounded-[14px] border-2 border-(--border) bg-gray-100 text-gray-600 cursor-not-allowed'
+            />
+            <small className='text-xs text-gray-500 italic'>Email cannot be changed</small>
+            </div>
+
+            {/* Submit Button */}
+            <div className='w-full flex justify-center'>
+            <button
+            type='submit'
+            disabled={updateMutation.isPending}
+            className='mt-4 px-6 py-3 rounded-[14px] bg-(--primary) text-white font-semibold uppercase tracking-wide transition hover:bg-(--secondary) disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[48px]'
+            >
+            {updateMutation.isPending ? (
+                <>
+                <span className='border-2 border-white/30 border-t-white rounded-full w-4 h-4 animate-spin'></span>
+                Saving...
+                </>
+            ) : (
+                'Save Changes'
+            )}
+            </button>
+            </div>
         </div>
-
-        {/* Email Field (Read-only) */}
-        <div className='flex flex-col gap-2'>
-          <label htmlFor='email' className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>
-            Email
-          </label>
-          <input
-            id='email'
-            type='email'
-            value={user?.email || ''}
-            disabled
-            className='px-4 py-3 rounded-[14px] border-2 border-(--border) bg-gray-100 text-gray-600 cursor-not-allowed'
-          />
-          <small className='text-xs text-gray-500 italic'>Email cannot be changed</small>
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type='submit'
-          disabled={updateMutation.isPending}
-          className='mt-4 px-6 py-3 rounded-[14px] bg-(--primary) text-white font-semibold uppercase tracking-wide transition hover:bg-(--secondary) disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[48px]'
-        >
-          {updateMutation.isPending ? (
-            <>
-              <span className='border-2 border-white/30 border-t-white rounded-full w-4 h-4 animate-spin'></span>
-              Saving...
-            </>
-          ) : (
-            'Save Changes'
-          )}
-        </button>
-      </form>
+        </form>
     </div>
   );
 }

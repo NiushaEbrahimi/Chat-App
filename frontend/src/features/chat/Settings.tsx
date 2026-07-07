@@ -7,7 +7,9 @@ import UserAvatar from '../../shared/UserAvatar';
 import { LogOut, Settings as SettingsIcon, Bell, Palette, TextIcon, Globe, Database } from 'lucide-react';
 import { setTextSize, setColorTheme, setNotificationsEnabled, setLanguage } from '../../store/slices/uiSlice';
 import { useTranslate } from '../../utils/i18n';
+import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 import type { RootState } from '../../store';
+import type { ColorTheme, TextSize, Language } from '../../store/slices/uiSlice';
 
 const COLOR_THEMES = [
   { id: 'purple', name: 'purple_mist', colors: ['#b38ddc', '#a9c2eb'] },
@@ -47,20 +49,20 @@ export default function Settings() {
 
   const t = useTranslate(language);
 
-  const handleTextSizeChange = (size: string) => {
-    dispatch(setTextSize(size as any));
+  const handleTextSizeChange = (size: TextSize) => {
+    dispatch(setTextSize(size));
   };
 
-  const handleThemeChange = (theme: string) => {
-    dispatch(setColorTheme(theme as any));
+  const handleThemeChange = (theme: ColorTheme) => {
+    dispatch(setColorTheme(theme));
   };
 
   const handleNotificationsChange = (enabled: boolean) => {
     dispatch(setNotificationsEnabled(enabled));
   };
 
-  const handleLanguageChange = (lang: string) => {
-    dispatch(setLanguage(lang as any));
+  const handleLanguageChange = (lang: Language) => {
+    dispatch(setLanguage(lang));
   };
 
   const handleClearCache = () => {
@@ -132,7 +134,7 @@ export default function Settings() {
       <div className='mb-6'>
         <h3 className='text-sm font-semibold text-(--primary) uppercase tracking-wide mb-3'>{t('profile')}</h3>
         <div className='p-4 rounded-[16px] bg-(--primary-faded) border border-(--border) flex items-center gap-4'>
-          <UserAvatar avatar={(user?.avatar || undefined) as string | undefined} inputSize={60} username={user?.username} />
+          <UserAvatar avatar={resolveAvatarUrl(user?.avatar)} inputSize={60} username={user?.username} />
           <div className='flex-1 min-w-0'>
             <p className='text-sm font-semibold text-(--primary) truncate'>{user?.username}</p>
             <p className='text-xs text-gray-600 truncate'>{user?.email}</p>
@@ -204,123 +206,124 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Notifications */}
-      <div className='mb-6'>
-        <div className='flex items-center gap-2 mb-3'>
-          <Bell className='w-4 h-4 text-(--primary)' />
-          <h3 className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>{t('notifications')}</h3>
-        </div>
-        <div className='p-4 rounded-[16px] bg-(--primary-faded) border border-(--border) space-y-4'>
-          <label className='flex items-center justify-between cursor-pointer group'>
-            <span className='font-medium text-(--primary)'>{t('enable_notifications')}</span>
-            <div className='relative'>
-              <input
-                type='checkbox'
-                checked={notificationsEnabled}
-                onChange={(e) => handleNotificationsChange(e.target.checked)}
-                className='w-6 h-6 rounded accent-(--primary) cursor-pointer'
-              />
-            </div>
-          </label>
-          <p className='text-xs text-gray-600'>{t('get_alerts')}</p>
-        </div>
-      </div>
-
-      {/* Language */}
-      <div className='mb-6'>
-        <div className='flex items-center gap-2 mb-3'>
-          <Globe className='w-4 h-4 text-(--primary)' />
-          <h3 className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>{t('language')}</h3>
-        </div>
-        <div className='p-4 rounded-[16px] bg-(--primary-faded) border border-(--border)'>
-          <select
-            value={language}
-            onChange={(e) => handleLanguageChange(e.target.value)}
-            className='w-full px-4 py-2 rounded-[12px] border border-(--border) bg-white text-(--primary) font-medium focus:outline-none focus:ring-2 focus:ring-(--primary-faded) cursor-pointer'
-          >
-            {LANGUAGES.map(lang => (
-              <option key={lang.id} value={lang.id}>
-                {lang.name}
-              </option>
-            ))}
-          </select>
-          <p className='text-xs text-gray-600 mt-2'>{t('language_switching_soon')}</p>
-        </div>
-      </div>
-
-      {/* Data and Storage */}
-      <div className='mb-6'>
-        <div className='flex items-center gap-2 mb-3'>
-          <Database className='w-4 h-4 text-(--primary)' />
-          <h3 className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>{t('data_storage')}</h3>
-        </div>
-        <div className='p-4 rounded-[16px] bg-(--primary-faded) border border-(--border) space-y-3'>
-          {cacheCleared && (
-            <div className='p-3 rounded-[12px] bg-green-100/50 text-green-700 text-sm font-medium border border-green-300/50'>
-              ✓ Cache cleared successfully!
-            </div>
-          )}
-          <div className='flex justify-between items-center'>
-            <span className='text-sm font-medium text-(--primary)'>{t('storage_used')}</span>
-            <span className='text-sm font-semibold text-(--primary)'>--</span>
+      {/* Grid Layout for Notifications, Language, Data & Storage, Danger Zone */}
+      <div className='grid grid-cols-2 gap-6'>
+        {/* Notifications */}
+        <div className='mb-0'>
+          <div className='flex items-center gap-2 mb-3'>
+            <Bell className='w-4 h-4 text-(--primary)' />
+            <h3 className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>{t('notifications')}</h3>
           </div>
-          <div>
-          <button
-            onClick={handleClearCache}
-            className='px-4 py-2 rounded-[12px] bg-orange-500/20 text-orange-700 border border-orange-300/50 font-medium text-sm transition hover:bg-orange-500/30'
-          >
-            {t('clear_cache')}
-          </button>
-          </div>
-          <p className='text-xs text-gray-600'>{t('cache_clearing_soon')}</p>
-        </div>
-      </div>
-
-      {/* Danger Zone */}
-      <div className='mb-6'>
-        <h3 className='text-sm font-semibold text-red-600 uppercase tracking-wide mb-3'>{t('danger_zone')}</h3>
-        <div className='p-5 rounded-[20px] bg-red-50 border border-red-300/50'>
-          {showConfirmLogout ? (
-            <div className='flex flex-col gap-4'>
-              <p className='text-sm font-medium text-(--primary) p-3 bg-red-100/50 rounded-[12px] border-l-4 border-red-500'>
-                {t('confirm_logout')}
-              </p>
-              <div className='flex gap-3'>
-                <button
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  className='flex-1 px-4 py-3 rounded-[14px] bg-red-500 text-white font-semibold uppercase tracking-wide transition hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[40px]'
-                >
-                  {isLoggingOut ? (
-                    <>
-                      <span className='border-2 border-white/30 border-t-white rounded-full w-4 h-4 animate-spin'></span>
-                      {t('logging_out')}
-                    </>
-                  ) : (
-                    <>
-                      <LogOut className='w-4 h-4' />
-                      {t('yes_logout')}
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowConfirmLogout(false)}
-                  disabled={isLoggingOut}
-                  className='flex-1 px-4 py-3 rounded-[14px] bg-gray-300/40 text-(--primary) font-semibold uppercase tracking-wide border border-gray-400/50 transition hover:bg-gray-300/60 disabled:opacity-50 disabled:cursor-not-allowed'
-                >
-                  {t('cancel')}
-                </button>
+          <div className='p-4 rounded-[16px] bg-(--primary-faded) border border-(--border) space-y-4'>
+            <label className='flex items-center justify-between cursor-pointer group'>
+              <span className='font-medium text-(--primary)'>{t('enable_notifications')}</span>
+              <div className='relative'>
+                <input
+                  type='checkbox'
+                  checked={notificationsEnabled}
+                  onChange={(e) => handleNotificationsChange(e.target.checked)}
+                  className='w-6 h-6 rounded accent-(--primary) cursor-pointer'
+                />
               </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowConfirmLogout(true)}
-              className='w-full px-4 py-3 rounded-[14px] bg-red-500 text-white font-semibold uppercase tracking-wide transition hover:bg-red-600 flex items-center justify-center gap-2 min-h-[44px]'
+            </label>
+            <p className='text-xs text-gray-600'>{t('get_alerts')}</p>
+          </div>
+        </div>
+
+        {/* Language */}
+        <div className='mb-0'>
+          <div className='flex items-center gap-2 mb-3'>
+            <Globe className='w-4 h-4 text-(--primary)' />
+            <h3 className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>{t('language')}</h3>
+          </div>
+          <div className='p-4 rounded-[16px] bg-(--primary-faded) border border-(--border)'>
+            <select
+              value={language}
+              onChange={(e) => handleLanguageChange(e.target.value as Language)}
+              className='w-full px-4 py-2 rounded-[12px] border border-(--border) bg-white text-(--primary) font-medium focus:outline-none focus:ring-2 focus:ring-(--primary-faded) cursor-pointer'
             >
-              <LogOut className='w-5 h-5' />
-              {t('log_out')}
+              {LANGUAGES.map(lang => (
+                <option key={lang.id} value={lang.id}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+            <p className='text-xs text-gray-600 mt-2'>{t('language_switching_soon')}</p>
+          </div>
+        </div>
+
+        {/* Data and Storage */}
+        <div className='mb-0'>
+          <div className='flex items-center gap-2 mb-3'>
+            <Database className='w-4 h-4 text-(--primary)' />
+            <h3 className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>{t('data_storage')}</h3>
+          </div>
+          <div className='p-4 rounded-[16px] bg-(--primary-faded) border border-(--border) space-y-3'>
+            {cacheCleared && (
+              <div className='p-3 rounded-[12px] bg-green-100/50 text-green-700 text-sm font-medium border border-green-300/50'>
+                ✓ Cache cleared successfully!
+              </div>
+            )}
+            <div className='flex justify-between items-center'>
+              <span className='text-sm font-medium text-(--primary)'>{t('storage_used')}</span>
+              <span className='text-sm font-semibold text-(--primary)'>--</span>
+            </div>
+            <button
+              onClick={handleClearCache}
+              className='px-4 py-2 rounded-[12px] bg-orange-500/20 text-orange-700 border border-orange-300/50 font-medium text-sm transition hover:bg-orange-500/30'
+            >
+              {t('clear_cache')}
             </button>
-          )}
+            <p className='text-xs text-gray-600'>{t('cache_clearing_soon')}</p>
+          </div>
+        </div>
+
+        {/* Danger Zone */}
+        <div className='mb-0'>
+          <h3 className='text-sm font-semibold text-red-600 uppercase tracking-wide mb-3'>{t('danger_zone')}</h3>
+          <div className='p-5 rounded-[20px] bg-red-50 border border-red-300/50'>
+            {showConfirmLogout ? (
+              <div className='flex flex-col gap-4'>
+                <p className='text-sm font-medium text-(--primary) p-3 bg-red-100/50 rounded-[12px] text-gray-600'>
+                  {t('confirm_logout')}
+                </p>
+                <div className='flex gap-3'>
+                  <button
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className='flex-1 px-4 py-3 rounded-[14px] bg-red-500 text-white font-semibold uppercase tracking-wide transition hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[40px] text-xs'
+                  >
+                    {isLoggingOut ? (
+                      <>
+                        <span className='border-2 border-white/30 border-t-white rounded-full w-4 h-4 animate-spin'></span>
+                        {t('logging_out')}
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className='w-4 h-4' />
+                        {t('yes_logout')}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowConfirmLogout(false)}
+                    disabled={isLoggingOut}
+                    className='flex-1 px-4 py-3 rounded-[14px] bg-gray-300/40 text-gray-600 font-semibold uppercase tracking-wide border border-gray-400/50 transition hover:bg-gray-300/60 disabled:opacity-50 disabled:cursor-not-allowed text-xs'
+                  >
+                    {t('cancel')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowConfirmLogout(true)}
+                className='px-4 py-3 rounded-[14px] bg-red-500 text-white font-semibold uppercase tracking-wide transition hover:bg-red-600 flex items-center justify-center gap-2 min-h-[44px] text-sm'
+              >
+                <LogOut className='w-5 h-5' />
+                {t('log_out')}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ import { useUserSearch } from '../../hooks/useUserSearch';
 
 import { setActiveRoom, setRooms, toggleTheme } from '../../store/slices/chatSlice';
 import { setNewConvo, offNewConvo } from '../../store/slices/newConvo';
-import { openSettings, openProfile } from '../../store/slices/uiSlice';
+import { openSettings, openProfile, closePanel } from '../../store/slices/uiSlice';
 import type { RootState } from '../../store';
 
 import type { Room, ChatUser } from '../../types/chatTypes';
@@ -18,6 +18,7 @@ import useClickOutside from '../../hooks/useOutside';
 import RoomAvatar from './components/RoomAvatar';
 import Spinner from '../../shared/Spinner';
 import UserAvatar from '../../shared/UserAvatar';
+import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 
 const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetStateAction<boolean>>} ) => {
   const [moreDisplay,setMoreDisplay] = useState(false);
@@ -43,7 +44,7 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
           onClick={() => {dispatch(openProfile()); setMenuDisplay(false)}}
           className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
         >
-          <UserAvatar avatar={avatar ?? undefined} username={username} inputSize={30}/>
+          <UserAvatar avatar={resolveAvatarUrl(avatar)} username={username} inputSize={30}/>
           <p className='text-gray-600'>{username}</p>
         </button>
 
@@ -59,7 +60,10 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
 
         <button
           onClick={() => {
-              if(savedRoom)dispatch(setActiveRoom({ roomId: savedRoom.data.id, roomType: 'saved_message', meta: savedRoom.data }))
+              if(savedRoom){
+                dispatch(closePanel());
+                dispatch(setActiveRoom({ roomId: savedRoom.data.id, roomType: 'saved_message', meta: savedRoom.data }))
+              }
               setMenuDisplay(false)
             }
           }
@@ -201,7 +205,7 @@ const ConversationList = () => {
                 //   : otherMember
                 //     ? { id: otherMember.id, username: otherMember.username, avatar: otherMember.avatar, is_online: onlineUserIds.includes(otherMember.id) }
                 //     : null;
-
+                dispatch(closePanel());
                 dispatch(setActiveRoom({ roomId: room.id, roomType, meta: room }));
               }}
               className={`w-full rounded-[22px] px-4 py-3 text-left transition mt-2 ${isActive ? 'bg-(--primary)/10 shadow-sm' : 'hover:bg-white/80'}`}
@@ -262,6 +266,7 @@ function AddNewConverstaion(){
       // open the room — compute meta for header (other member)
       const other = room.members.find((m: ChatUser) => m.id !== currentUserId);
       const meta = other ? { id: other.id, username: other.username, avatar: other.avatar, is_online: onlineUserIds.includes(other.id) } : null;
+      dispatch(closePanel());
       dispatch(setActiveRoom({ roomId: room.id, roomType: 'user', meta }));
 
       // refresh the rooms list in the background
@@ -302,7 +307,7 @@ function AddNewConverstaion(){
                     if (!isPending) startChat({ userId: user.id, username: user.username });
                   }}
                 >
-                  <UserAvatar avatar={user.avatar ?? undefined} inputSize={36} username={user.username} />
+                  <UserAvatar avatar={resolveAvatarUrl(user.avatar)} inputSize={36} username={user.username} />
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-slate-900'>{user.username}</span>
                     <span className='text-xs text-(--primary)'>
