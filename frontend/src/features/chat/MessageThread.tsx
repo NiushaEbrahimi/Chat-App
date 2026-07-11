@@ -17,6 +17,27 @@ interface Props {
   roomId: string;
 }
 
+const formatMessageTimestamp = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const today = new Date();
+  const isToday = date.toDateString() === today.toDateString();
+  const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+  return isToday ? `${time}` : `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} • ${time}`;
+};
+
+const formatDayLabel = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return 'Today';
+
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 const MessageThread = ({ roomId }: Props) => {
   const dispatch = useDispatch();
   const { sendMessage } = useWebSocket();
@@ -106,29 +127,42 @@ const MessageThread = ({ roomId }: Props) => {
       )}
 
       <div className='flex-1 overflow-y-auto px-6 flex flex-col gap-4 pt-25 pb-6'>
-        {messages.map(message => {
+        {messages.map((message, index) => {
           const isCurrentUser = currentUser?.id === message.sender.id;
+          const previousMessage = messages[index - 1];
+          const showDayLabel = index === 0 || formatDayLabel(message.created_at) !== formatDayLabel(previousMessage?.created_at ?? '');
 
           return (
-            <div
-              key={message.id}
-              data-message-id={message.id}
-              className={`flex flex-col gap-2 ${isCurrentUser ? 'items-end' : 'items-start'}`}
-            >
-              {activeRoom?.roomType === 'group' && !isCurrentUser && (
-                <div className='text-[11px] text-(--primary)'>
-                  {message.sender.username}
+            <div key={message.id}>
+              {showDayLabel && (
+                <div className='my-2 flex justify-center'>
+                  <span className='rounded-full bg-white/70 px-3 py-1 text-[11px] font-medium text-slate-500'>
+                    {formatDayLabel(message.created_at)}
+                  </span>
                 </div>
               )}
-              <div className={`max-w-[70%] rounded-3xl border border-(--border) px-4 py-3 ${textSizeClass} shadow-sm ${isCurrentUser ? 'bg-(--primary) text-white' : 'bg-white/90 text-slate-900'}`}>
-                {message.content}
-              </div>
+              <div
+                data-message-id={message.id}
+                className={`flex flex-col gap-2 ${isCurrentUser ? 'items-end' : 'items-start'}`}
+              >
+                {activeRoom?.roomType === 'group' && !isCurrentUser && (
+                  <div className='text-[11px] text-(--primary)'>
+                    {message.sender.username}
+                  </div>
+                )}
+                <div className={`min-w-[10%] max-w-[70%] rounded-xl border border-(--border) px-2 pt-2 pb-4 ${textSizeClass} shadow-sm ${isCurrentUser ? 'bg-(--primary) text-white' : 'bg-white/90 text-slate-900'} relative`}>
+                  {message.content}
+                  <div className={`absolute right-2 bottom-0 text-[10px] ${isCurrentUser ? 'text-white/70' : 'text-slate-400'}`}>
+                    {formatMessageTimestamp(message.created_at)}
+                  </div>
+                </div>
 
-              {activeRoom?.roomType === 'group' && message.reads.length > 0 && (
-                <div className='text-[10px] text-(--primary)/80'>
-                  Read by {message.reads.map(r => r.user.username).join(', ')}
-                </div>
-              )}
+                {activeRoom?.roomType === 'group' && message.reads.length > 0 && (
+                  <div className='text-[10px] text-(--primary)/80'>
+                    Read by {message.reads.map(r => r.user.username).join(', ')}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}

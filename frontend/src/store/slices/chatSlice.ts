@@ -39,6 +39,14 @@ const initialState: ChatState = {
   onlineUserIds: [],
 };
 
+const sortRoomsByLatestMessage = (rooms: Room[]) => {
+  return [...rooms].sort((a, b) => {
+    const aTime = a.last_message?.created_at ? new Date(a.last_message.created_at).getTime() : 0;
+    const bTime = b.last_message?.created_at ? new Date(b.last_message.created_at).getTime() : 0;
+    return bTime - aTime;
+  });
+};
+
 const chatSlice = createSlice({
   name: 'chat',
   initialState,
@@ -49,13 +57,22 @@ const chatSlice = createSlice({
     },
     // called when React Query fetches the room list
     setRooms: (state, action: PayloadAction<Room[]>) => {
-      state.rooms = action.payload;
+      const existingRooms = new Map(state.rooms.map(room => [room.id, room]));
+      state.rooms = sortRoomsByLatestMessage(action.payload.map(room => ({
+        ...room,
+        unreadCount: room.unreadCount ?? existingRooms.get(room.id)?.unreadCount ?? 0,
+      })));
     },
 
     setActiveRoom: (state, action: PayloadAction<{ roomId: string; roomType: "group" | "saved_message" | "user"; meta?: MetaType }>) => {
       state.activeRoom.roomId = action.payload.roomId;
       state.activeRoom.roomType = action.payload.roomType;
       state.activeRoom.meta = action.payload.meta ?? null;
+
+      const roomIndex = state.rooms.findIndex(room => room.id === action.payload.roomId);
+      if (roomIndex !== -1) {
+        state.rooms[roomIndex].unreadCount = 0;
+      }
     },
 
     // called when React Query fetches message history for a room
@@ -64,22 +81,29 @@ const chatSlice = createSlice({
     },
 
     // called when WebSocket receives a new message
-    addMessage: (state, action: PayloadAction<Message>) => {
-      const { room } = action.payload;
+    addMessage: (state, action: PayloadAction<{ message: Message; isIncoming?: boolean }>) => {
+      const { message, isIncoming = true } = action.payload;
+      const { room } = message;
       if (!state.messages[room]) {
         state.messages[room] = [];
       }
       // avoid duplicates (optimistic update + WS echo)
-      const exists = state.messages[room].some(m => m.id === action.payload.id);
+      const exists = state.messages[room].some(m => m.id === message.id);
       if (!exists) {
-        state.messages[room].push(action.payload);
+        state.messages[room].push(message);
       }
 
-      // update last_message in the room list
       const roomIndex = state.rooms.findIndex(r => r.id === room);
       if (roomIndex !== -1) {
-        state.rooms[roomIndex].last_message = action.payload;
+        const targetRoom = state.rooms[roomIndex];
+        targetRoom.last_message = message;
+
+        if (isIncoming && state.activeRoom.roomId !== room) {
+          targetRoom.unreadCount = (targetRoom.unreadCount ?? 0) + 1;
+        }
       }
+
+      state.rooms = sortRoomsByLatestMessage(state.rooms);
     },
 
     // called when WebSocket receives typing_indicator

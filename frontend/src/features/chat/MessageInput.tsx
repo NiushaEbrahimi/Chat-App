@@ -60,7 +60,7 @@ const MessageInput = ({ roomId }: Props) => {
         onKeyDown={handleKeyDown}
         placeholder='Type a message... (Enter to send)'
         rows={1}
-        className='min-h-14 flex-1 resize-none rounded-[26px] border border-(--border) bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-(--primary) focus:ring-2 focus:ring-(--primary-faded)'
+        className='min-h-14 z-100 flex-1 resize-none rounded-[26px] border border-(--border) bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-(--primary) focus:ring-2 focus:ring-(--primary-faded)'
       />
       <button
         onClick={handleSend}

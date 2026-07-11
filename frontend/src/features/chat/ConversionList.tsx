@@ -195,7 +195,14 @@ const ConversationList = () => {
               ? room.name
               : otherMember?.username ?? 'Unknown';
           const hasOnlineMember = room.members.some(m => onlineUserIds.includes(m.id));
-          const senderMessage = room.is_group ? `${room.last_message?.sender.username} : ` : room.is_saved_messages ? 'You : ' : <></>;
+          const senderLabel = room.is_group
+            ? `${room.last_message?.sender.username ?? 'User'}: `
+            : room.is_saved_messages
+              ? 'You: '
+              : '';
+          const previewText = room.last_message ? `${senderLabel}${room.last_message.content}` : 'No messages yet';
+          const unreadCount = room.unreadCount ?? 0;
+          const isUnread = unreadCount > 0;
 
           return (
             <button
@@ -224,12 +231,17 @@ const ConversationList = () => {
                   {hasOnlineMember && <span className='absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white' />}
                 </div>
                 <div className='min-w-0 flex-1'>
-                  <div className='text-sm font-medium text-slate-900'>{displayName}</div>
-                  {room.last_message && (
-                    <p className='truncate text-xs text-slate-500'>
-                      {senderMessage} {room.last_message.content}
-                    </p>
-                  )}
+                  <div className='flex items-center justify-between gap-2'>
+                    <div className='text-sm font-medium text-slate-900'>{displayName}</div>
+                    {isUnread && (
+                      <span className='rounded-full bg-(--primary) px-2 py-0.5 text-[10px] font-semibold text-white'>
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  <p className={`truncate text-xs ${isUnread ? 'font-semibold text-slate-900' : 'text-slate-500'}`}>
+                    {previewText}
+                  </p>
                 </div>
               </div>
             </button>
