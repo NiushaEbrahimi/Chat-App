@@ -2,6 +2,7 @@ export interface User {
   readonly id : string;
   email : string;
   username : string;
+  avatar?: string | null;
 }
 export interface AuthState{
     user : User | null;

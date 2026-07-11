@@ -66,8 +66,13 @@ const authSlice = createSlice({
     clearRateLimit: (state) => {
       state.rateLimitUntil = null;
     },
+    updateUser: (state, action: PayloadAction<Partial<User>>) => {
+      if (!state.user) return;
+      state.user = { ...state.user, ...action.payload };
+      localStorage.setItem("user", JSON.stringify(state.user));
+    },
   },
 });
 
-export const { login, logout, updateToken , setRateLimit, clearRateLimit } = authSlice.actions;
+export const { login, logout, updateToken , setRateLimit, clearRateLimit, updateUser } = authSlice.actions;
 export default authSlice.reducer;

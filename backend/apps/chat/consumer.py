@@ -29,6 +29,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # this means they'll receive messages from all their rooms
         self.room_groups = []
         user_rooms = await self.get_user_rooms()
+        print("ROOM COUNT:", len(user_rooms))
 
         for room in user_rooms:
             group_name = room.get_channel_group_name()
@@ -80,6 +81,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # route to the correct handler
         handlers = {
+            'ping':           self.handle_ping,
             'send_message':   self.handle_send_message,
             'typing_start':   self.handle_typing_start,
             'typing_stop':    self.handle_typing_stop,
@@ -91,6 +93,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await handler(data)
 
     # ─── Client → Server handlers ──────────────────────────────────
+
+    async def handle_ping(self, data):
+        """
+        Client is sending a ping to keep the connection alive.
+        Just send back a pong.
+        """
+        await self.send(text_data=json.dumps({'type': 'pong'}))
 
     async def handle_send_message(self, data):
         """
@@ -112,7 +121,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = await self.save_message(room, content)
 
         # broadcast to everyone in the room via Redis
-        await self.channel_layer.group_send(
+        await self.safe_group_send(
             room.get_channel_group_name(),
             {
                 'type': 'chat_message',   # maps to the chat_message method below
@@ -132,7 +141,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         # broadcast to the room — everyone sees "John is typing..."
-        await self.channel_layer.group_send(
+        await self.safe_group_send(
             room.get_channel_group_name(),
             {
                 'type': 'typing_indicator',
@@ -149,7 +158,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if not room:
             return
 
-        await self.channel_layer.group_send(
+        await self.safe_group_send(
             room.get_channel_group_name(),
             {
                 'type': 'typing_indicator',
@@ -180,7 +189,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # notify the room about the read receipt
         room = await self.get_room_from_message(message)
-        await self.channel_layer.group_send(
+        await self.safe_group_send(
             room.get_channel_group_name(),
             {
                 'type': 'read_receipt',
@@ -235,6 +244,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'username': event['username'],
             'is_online': event['is_online'],
         }))
+
+    # ─── Channel layer helpers ────────────────────────────────────
+    async def safe_group_send(self, group_name, message):
+        """
+        Safely send a message to a group, handling Redis timeouts gracefully.
+        If Redis is unavailable, log the error but don't crash the connection.
+        """
+        try:
+            await self.channel_layer.group_send(group_name, message)
+        except Exception as e:
+            # Log but don't crash — the connection should stay alive
+            print(f'Error sending to group {group_name}: {e}')
 
     # ─── Database helpers ──────────────────────────────────────────
     # All DB operations must be wrapped in database_sync_to_async
@@ -305,7 +326,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 continue  # avoid sending to same group twice
             notified_groups.add(group)
 
-            await self.channel_layer.group_send(group, {
+            await self.safe_group_send(group, {
                 'type': 'online_status',
                 'user_id': str(self.user.id),
                 'username': self.user.username,
