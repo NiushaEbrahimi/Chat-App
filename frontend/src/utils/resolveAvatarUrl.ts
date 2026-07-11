@@ -1,9 +1,6 @@
-/**
- * Resolves a relative avatar URL to a full URL
- * If the avatar is a relative path, prepends VITE_API_URL
- * If it's already a full URL or null, returns as-is
- */
 export const resolveAvatarUrl = (avatar: string | null | undefined): string | undefined => {
+  console.log("avatar")
+  console.log(avatar)
   if (!avatar) return undefined;
   
   // If it's already a full URL (starts with http/https), return as-is

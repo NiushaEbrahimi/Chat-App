@@ -12,7 +12,6 @@ import TypingIndicator from './TypingIndicator';
 import type { Message } from '../../types/chatTypes';
 import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
-import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 
 interface Props {
   roomId: string;
@@ -27,8 +26,6 @@ const MessageThread = ({ roomId }: Props) => {
   console.log("activeroom")
   console.log(activeRoom)
   console.log(activeRoom.meta)
-  console.log("roomtype")
-  console.log(activeRoom.roomType)
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery<
@@ -83,7 +80,7 @@ const MessageThread = ({ roomId }: Props) => {
               <div className='w-full flex justify-center'>
                 <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                   <div className='flex flex-col items-center text-center'>
-                    <p className='text-black font-semibold'>{activeRoom.roomType==="saved_message" ? activeRoom.meta?.name : activeRoom.meta?.username}</p>
+                    <p className='text-black font-semibold'>{activeRoom.meta?.name}</p>
                     <p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>
                   </div>
                 </GlassCard>
@@ -92,7 +89,7 @@ const MessageThread = ({ roomId }: Props) => {
             <div>
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>
-                  <UserAvatar avatar={resolveAvatarUrl(activeRoom.meta?.avatar_url)} inputSize={64} username={activeRoom.meta?.username}/>
+                  <UserAvatar avatar={activeRoom.meta?.avatar_url} inputSize={64} username={activeRoom.meta?.name}/>
                 </div>
               </GlassCard>
             </div>

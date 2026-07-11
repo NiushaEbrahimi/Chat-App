@@ -2,16 +2,14 @@
 // import { Bookmark, Users } from 'lucide-react'
 
 
-export default function UserAvatar({avatar, inputSize = 36, username} : {avatar : undefined | string , inputSize : number, username : string | undefined}){
+export default function UserAvatar({avatar, inputSize = 36, username} : {avatar : undefined | string , inputSize : number, username : string | undefined | null}){
+  console.log("Avatar:", avatar);
+  console.log("Username:", username);
   const base: React.CSSProperties = {
     width: inputSize, height: inputSize, borderRadius: '50%',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     flexShrink: 0, fontSize: inputSize * 0.4, fontWeight: 600
   }
-
-    // <div style={{ ...base, background: 'var(--secondary-faded)', color: 'var(--primary)' }}>
-    //   {avatar.name === 'bookmark' ? <Bookmark size={size * 0.5} /> : <Users size={size * 0.5} />}
-    // </div>
     
     if(!avatar){
       return(

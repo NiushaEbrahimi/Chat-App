@@ -200,13 +200,13 @@ const ConversationList = () => {
               type='button'
               onClick={() => {
                 const roomType = room.is_group ? 'group' : room.is_saved_messages ? 'saved_message' : 'user';
-                // const meta = room.is_group
-                //   ? { name: room.name, avatar_url: room.avatar_url }
-                //   : otherMember
-                //     ? { id: otherMember.id, username: otherMember.username, avatar: otherMember.avatar, is_online: onlineUserIds.includes(otherMember.id) }
-                //     : null;
+                const meta = room.is_group || room.is_saved_messages
+                  ? room
+                  : otherMember
+                    ? { id: otherMember.id, username: otherMember.username, avatar: otherMember.avatar, is_online: onlineUserIds.includes(otherMember.id) }
+                    : null;
                 dispatch(closePanel());
-                dispatch(setActiveRoom({ roomId: room.id, roomType, meta: room }));
+                dispatch(setActiveRoom({ roomId: room.id, roomType, meta }));
               }}
               className={`w-full rounded-[22px] px-4 py-3 text-left transition mt-2 ${isActive ? 'bg-(--primary)/10 shadow-sm' : 'hover:bg-white/80'}`}
             >

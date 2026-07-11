@@ -20,17 +20,13 @@ type MetaType = Meta | null
 interface ChatState {
   theme: "dark" | "light"
   rooms: Room[];
-  // messages stored per room: { roomId: Message[] }
   messages: Record<string, Message[]>;
   activeRoom: {
     roomId: string | null;
     roomType: "group" | "saved_message" | "user";
-    // optional metadata about the current conversation (other user or group)
     meta?: MetaType ;
   };
-  // typing users per room: { roomId: TypingUser[] }
   typingUsers: Record<string, TypingUser[]>;
-  // online user IDs stored in a set-like object
   onlineUserIds: string[];
 }
 
