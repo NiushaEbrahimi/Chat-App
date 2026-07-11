@@ -21,3 +21,5 @@ frontend/.env.production
 .vscode/
 .DS_Store
 Thumbs.db
+
+.venv/
