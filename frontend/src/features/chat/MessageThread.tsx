@@ -23,9 +23,7 @@ const MessageThread = ({ roomId }: Props) => {
   const { className: textSizeClass } = useTextSize();
   const messages = useSelector((s: RootState) => s.chat.messages[roomId] ?? []) as Message[];
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
-  console.log("activeroom")
-  console.log(activeRoom)
-  console.log(activeRoom.meta)
+  const currentUser = useSelector((s: RootState) => s.auth.user);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery<
@@ -80,7 +78,7 @@ const MessageThread = ({ roomId }: Props) => {
               <div className='w-full flex justify-center'>
                 <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                   <div className='flex flex-col items-center text-center'>
-                    <p className='text-black font-semibold'>{activeRoom.meta?.name}</p>
+                    <p className='text-black font-semibold'>{activeRoom.meta?.name==="Saved Messages" ? "Saved Messages" : activeRoom.meta?.username}</p>
                     <p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>
                   </div>
                 </GlassCard>
@@ -89,7 +87,7 @@ const MessageThread = ({ roomId }: Props) => {
             <div>
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>
-                  <UserAvatar avatar={activeRoom.meta?.avatar_url} inputSize={64} username={activeRoom.meta?.name}/>
+                  <UserAvatar avatar={activeRoom.meta?.avatar} inputSize={64} username={activeRoom.meta?.username ? activeRoom.meta?.username : activeRoom.meta?.name}/>
                 </div>
               </GlassCard>
             </div>
@@ -108,28 +106,32 @@ const MessageThread = ({ roomId }: Props) => {
       )}
 
       <div className='flex-1 overflow-y-auto px-6 flex flex-col gap-4 pt-25 pb-6'>
-        {messages.map(message => (
-          <div
-            key={message.id}
-            data-message-id={message.id}
-            className='flex flex-col items-end gap-2'
-          >
-            {activeRoom?.roomType === 'group' && (
-              <div className='text-[11px] text-(--primary)'>
-                {message.sender.username}
-              </div>
-            )}
-            <div className={`max-w-[70%] rounded-3xl border border-(--border) bg-white/90 px-4 py-3 ${textSizeClass} text-slate-900 shadow-sm`}>
-              {message.content}
-            </div>
+        {messages.map(message => {
+          const isCurrentUser = currentUser?.id === message.sender.id;
 
-            {activeRoom?.roomType === 'group' && message.reads.length > 0 && (
-              <div className='text-[10px] text-(--primary)/80'>
-                Read by {message.reads.map(r => r.user.username).join(', ')}
+          return (
+            <div
+              key={message.id}
+              data-message-id={message.id}
+              className={`flex flex-col gap-2 ${isCurrentUser ? 'items-end' : 'items-start'}`}
+            >
+              {activeRoom?.roomType === 'group' && !isCurrentUser && (
+                <div className='text-[11px] text-(--primary)'>
+                  {message.sender.username}
+                </div>
+              )}
+              <div className={`max-w-[70%] rounded-3xl border border-(--border) px-4 py-3 ${textSizeClass} shadow-sm ${isCurrentUser ? 'bg-(--primary) text-white' : 'bg-white/90 text-slate-900'}`}>
+                {message.content}
               </div>
-            )}
-          </div>
-        ))}
+
+              {activeRoom?.roomType === 'group' && message.reads.length > 0 && (
+                <div className='text-[10px] text-(--primary)/80'>
+                  Read by {message.reads.map(r => r.user.username).join(', ')}
+                </div>
+              )}
+            </div>
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 

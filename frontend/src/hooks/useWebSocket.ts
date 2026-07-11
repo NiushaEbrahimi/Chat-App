@@ -124,7 +124,6 @@ export const useWebSocket = () => {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
       reconnectAttempt.current = 0;  // reset backoff on successful connect
       setupHeartbeat();  // Start sending pings
     };
@@ -147,7 +146,6 @@ export const useWebSocket = () => {
 
       // anything else — reconnect with exponential backoff
       const delay = getBackoffDelay(reconnectAttempt.current);
-      console.log(`WS disconnected (code: ${event.code}). Reconnecting in ${delay}ms...`);
 
       reconnectTimeout.current = setTimeout(() => {
         reconnectAttempt.current += 1;

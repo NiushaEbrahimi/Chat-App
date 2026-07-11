@@ -1,8 +1,10 @@
 // import { UserCircle } from "lucide-react"
 // import { Bookmark, Users } from 'lucide-react'
 
+import { Bookmark } from "lucide-react";
 
-export default function UserAvatar({avatar, inputSize = 36, username} : {avatar : undefined | string , inputSize : number, username : string | undefined | null}){
+
+export default function UserAvatar({avatar, inputSize = 36, username} : {avatar : string | null | undefined , inputSize : number, username : string | undefined | null}){
   console.log("Avatar:", avatar);
   console.log("Username:", username);
   const base: React.CSSProperties = {
@@ -12,6 +14,13 @@ export default function UserAvatar({avatar, inputSize = 36, username} : {avatar 
   }
     
     if(!avatar){
+      if(username === "Saved Messages"){
+        return(
+          <div style={{ ...base, background: 'var(--primary)', color: '#fff' }}>
+            <Bookmark size={inputSize * 0.6} />
+          </div>
+        )
+      }
       return(
         <div style={{ ...base, background: 'var(--primary)', color: '#fff' }}>
           {username?.charAt(0).toUpperCase()}

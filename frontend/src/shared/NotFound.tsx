@@ -1,7 +1,6 @@
 // TODO: 
 import CrystalMist from "./CrystalMist"
 import background from "../assets/images/AuthBackground.jpeg"
-import programmer from "../assets/images/Programmer.PNG"
 import style from "../assets/css/CrystalMist.module.css"
 
 import { useNavigate } from "react-router-dom"
@@ -27,7 +26,9 @@ export default function NotFound(){
                         </div>
                     </div>
                     <div>
-                        <img src={programmer} alt="programmer" className="w-fit h-fit" />
+                        <div className="w-48 h-48 rounded-3xl border border-white/30 bg-white/20 backdrop-blur-sm flex items-center justify-center text-6xl font-semibold">
+                            ?
+                        </div>
                     </div>
                 </div>
             </CrystalMist>

@@ -149,6 +149,9 @@ const ConversationList = () => {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  console.log("activeRoom", activeRoom)
+  console.log("rooms", rooms)
+
   useClickOutside(wrapperRef, () => setMenuDisplay(false));
 
   return (
@@ -203,7 +206,12 @@ const ConversationList = () => {
                 const meta = room.is_group || room.is_saved_messages
                   ? room
                   : otherMember
-                    ? { id: otherMember.id, username: otherMember.username, avatar: otherMember.avatar, is_online: onlineUserIds.includes(otherMember.id) }
+                    ? { 
+                        id: otherMember.id, 
+                        username: otherMember.username, 
+                        avatar: otherMember.avatar, 
+                        is_online: onlineUserIds.includes(otherMember.id) 
+                      }
                     : null;
                 dispatch(closePanel());
                 dispatch(setActiveRoom({ roomId: room.id, roomType, meta }));
