@@ -49,6 +49,10 @@ const ChatPage = () => {
           <div className='flex h-full items-center justify-center text-slate-500'>
             <Settings/>
           </div>
+        ) : activePanel === 'room-edit' ? (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            <Settings/>
+          </div>
         ) :
         activeRoom.roomId ? (
           <MessageThread roomId={activeRoom.roomId} />

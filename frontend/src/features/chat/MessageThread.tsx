@@ -12,6 +12,7 @@ import TypingIndicator from './TypingIndicator';
 import type { Message } from '../../types/chatTypes';
 import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
+import { openRoomEdit } from '../../store/slices/uiSlice';
 
 interface Props {
   roomId: string;
@@ -94,19 +95,22 @@ const MessageThread = ({ roomId }: Props) => {
     <div className='flex h-full flex-col rounded-[28px] border border-(--border) bg-(--secondary-faded) shadow-inner shadow-[rgba(106,17,203,0.08)]'>
 
           <div className={`sticky h-0 top-12 z-10 rounded-[28px] flex justify-center items-center px-10`}>
-            <div className='flex-1 flex justify-center'>
-              <div className='w-full flex justify-center'>
-                <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
-                  <div className='flex flex-col items-center text-center'>
-                    <p className='text-black font-semibold'>{activeRoom.meta?.name==="Saved Messages" ? "Saved Messages" : activeRoom.roomType==="group" ? activeRoom.meta?.name :  activeRoom.meta?.username}</p>
-                    { isTyping.length > 0 
-                      ?<p className='text-gray-500 text-sm'>{activeRoom.roomType==="group" ? `${isTyping.map(user => user.username).join(', ')} is` : ''} typing...</p>
-                      :<p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>}
-                  </div>
-                </GlassCard>
-              </div>
+            <div 
+              className='flex-1 flex justify-center'
+              onClick={()=>{dispatch(openRoomEdit())}}
+            >
+              <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
+                <div className='flex flex-col items-center text-center'>
+                  <p className='text-black font-semibold'>{activeRoom.meta?.name==="Saved Messages" ? "Saved Messages" : activeRoom.roomType==="group" ? activeRoom.meta?.name :  activeRoom.meta?.username}</p>
+                  { isTyping.length > 0 
+                    ?<p className='text-gray-500 text-sm'>{activeRoom.roomType==="group" ? `${isTyping.map(user => user.username).join(', ')} is` : ''} typing...</p>
+                    :<p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>}
+                </div>
+              </GlassCard>
             </div>
-            <div>
+            <div
+              onClick={()=>{dispatch(openRoomEdit())}}
+            >
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>
                   <UserAvatar avatar={activeRoom.meta?.avatar} inputSize={64} username={activeRoom.meta?.username ? activeRoom.meta?.username : activeRoom.meta?.name}/>
