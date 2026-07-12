@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { Bookmark, PlusCircle, Search, Menu, Cog, UserRoundPlus, EllipsisVertical, Sun, Moon, X } from 'lucide-react';
+import { Bookmark, PlusCircle, Search, Menu, Cog, UserRoundPlus, EllipsisVertical, Sun, Moon, X, Plus } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -149,8 +149,8 @@ const ConversationList = () => {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  console.log("activeRoom", activeRoom)
-  console.log("rooms", rooms)
+  const isTyping = useSelector((s: RootState) => s.chat.typingUsers)
+  console.log(isTyping)
 
   useClickOutside(wrapperRef, () => setMenuDisplay(false));
 
@@ -228,7 +228,7 @@ const ConversationList = () => {
               <div className='flex items-center gap-3'>
                 <div className='relative'>
                   <RoomAvatar room={room} currentUserId={currentUserId} />
-                  {hasOnlineMember && <span className='absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white' />}
+                  {(!room.is_group && !room.is_saved_messages && hasOnlineMember) && <span className='absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white' />}
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='flex items-center justify-between gap-2'>
@@ -239,9 +239,16 @@ const ConversationList = () => {
                       </span>
                     )}
                   </div>
-                  <p className={`truncate text-xs ${isUnread ? 'font-semibold text-slate-900' : 'text-slate-500'}`}>
-                    {previewText}
-                  </p>
+                  {
+                    isTyping[room.id] && isTyping[room.id].length > 0 ? (
+                      <p className='truncate text-xs font-semibold text-slate-900'>
+                        {room.is_group ? `${isTyping[room.id].map(user => user.username).join(', ')} is` : ''}  typing...
+                      </p>
+                    ) : 
+                    <p className={`truncate text-xs ${isUnread ? 'font-semibold text-slate-900' : 'text-slate-500'}`}>
+                      {previewText}
+                    </p>
+                  }
                 </div>
               </div>
             </button>
@@ -265,11 +272,60 @@ function AddNewConverstaion(){
   const dispatch = useDispatch()
 
   const [query, setQuery] = useState('')
+  const [makingGroup, setMakingGroup] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+
   const { data, isLoading } = useUserSearch(query)
   const queryClient = useQueryClient();
+
   const rooms = useSelector((s: RootState) => s.chat.rooms);
   const onlineUserIds = useSelector((s: RootState) => s.chat.onlineUserIds);
   const currentUserId = useSelector((s: RootState) => s.auth.user?.id);
+
+  const { mutate: startGroup, isPending: isCreatingGroup } = useMutation({
+  mutationFn: () =>
+    createRoom({
+      name: groupName.trim(),
+      is_group: true,
+      member_ids: selectedUsers.map(user => user.id),
+    }),
+
+  onSuccess: (response) => {
+    const room = response.data;
+
+    const exists = rooms.some(r => r.id === room.id);
+
+    if (!exists) {
+      dispatch(setRooms([room, ...rooms]));
+    }
+
+    dispatch(closePanel());
+
+    dispatch(
+      setActiveRoom({
+        roomId: room.id,
+        roomType: 'group',
+        meta: {
+          id: room.id,
+          username: room.name,
+          avatar: room.avatar,
+          is_online: false,
+        },
+      })
+    );
+
+    queryClient.invalidateQueries({
+      queryKey: ['rooms'],
+    });
+
+    dispatch(offNewConvo());
+
+    setGroupName('');
+    setSelectedUsers([]);
+    setMakingGroup(false);
+  },
+});
 
   const { mutate: startChat, isPending } = useMutation({
   mutationFn: ({userId , username } : {userId:string, username:string}) =>
@@ -297,7 +353,7 @@ function AddNewConverstaion(){
   });
 
   return(
-    <main className='fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-6'>
+    <main className='fixed inset-0 z-150 flex items-center justify-center bg-slate-950/40 p-6'>
       <section className='w-full max-w-2xl min-h-100 rounded-4xl border border-(--border) bg-white/95 p-8 shadow-2xl'>
         <div className='w-full flex flex-col items-center gap-6'>
           <div 
@@ -306,25 +362,77 @@ function AddNewConverstaion(){
           >
             <X/>
           </div>
-          <div className='relative w-full max-w-md'>
-            <input 
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              type='text' 
-              className='w-full rounded-3xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
-              placeholder='Search users by @username'
-            />
-            <Search className='absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--primary)' />
+          <div className='w-full flex justify-center gap-2'>
+            <div className='relative w-full max-w-md'>
+              <input 
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                type='text' 
+                className='w-full rounded-3xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
+                placeholder='Search users by @username'
+              />
+              <Search className='absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--primary)' />
+            </div>
+            <div>
+              {makingGroup 
+              ?<div className='flex h-full items-center'>
+                <input
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  type="text"
+                  className='rounded-3xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
+                  placeholder='Group Name'
+                />
+                <div onClick={() => {
+                  setMakingGroup(false);
+                  setGroupName('');
+                  setSelectedUsers([]);
+                }}>
+                  <X className='text-(--primary)'/>
+                </div>
+              </div>
+              :<button 
+                className='flex h-full items-center gap-1 rounded-3xl bg-(--primary) px-3 py-2 text-sm cursor-pointer text-white hover:bg-(--primary-faded-bg)' 
+                onClick={()=>setMakingGroup(true)}
+              >
+                <UserRoundPlus/>Make Group
+              </button>
+              }
+            </div>
           </div>
           <div className='w-full flex-1 space-y-3 overflow-y-auto px-2'>
             {isLoading && <Spinner />}
-            {data?.map((user: User, index: number) => (
+            {data?.map((user: User) => (
               <div key={user.id}>
                 <button
                   type='button'
-                  className='flex w-full items-center gap-3 rounded-[22px] border border-(--border) bg-(--surface) px-4 py-3 text-left transition hover:border-(--primary) hover:bg-(--primary-faded)'
+                  className={`flex w-full items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition hover:border-(--primary) hover:bg-(--primary-faded)
+                  ${
+                    selectedUsers.some(u => u.id === user.id)
+                      ? 'border-(--primary) bg-(--primary-faded)'
+                      : 'border-(--border) bg-(--surface)'
+                  }`}
                   onClick={() => {
-                    if (!isPending) startChat({ userId: user.id, username: user.username });
+                    if (makingGroup) {
+                      setSelectedUsers(prev => {
+                        const exists = prev.some(u => u.id === user.id);
+
+                        if (exists) {
+                          return prev.filter(u => u.id !== user.id);
+                        }
+
+                        return [...prev, user];
+                      });
+
+                      return;
+                    }
+
+                    if (!isPending) {
+                      startChat({
+                        userId: user.id,
+                        username: user.username,
+                      });
+                    }
                   }}
                 >
                   <UserAvatar avatar={resolveAvatarUrl(user.avatar)} inputSize={36} username={user.username} />
@@ -338,11 +446,38 @@ function AddNewConverstaion(){
                     <span className='ml-auto text-xs text-(--primary)'>Opening...</span>
                   )}
                 </button>
-                {index < data.length - 1 && (
-                  <div className='h-px bg-(--border)' />
-                )}
+                {/* {index < data.length - 1 && (
+                  <div className='h-px bg-(--border) mt-3' />
+                )} */}
               </div>
             ))}
+            {makingGroup && selectedUsers.length > 0 && (
+              <div className='flex flex-wrap gap-2 justify-center'>
+                {selectedUsers.map(user => (
+                  <div
+                    key={user.id}
+                    className='rounded-full bg-(--primary-faded) px-3 py-1 text-sm'
+                  >
+                    @{user.username}
+                  </div>
+                ))}
+              </div>
+            )}
+            {makingGroup && <div className='w-full flex justify-center'>
+              <div className='flex items-center gap-1 rounded-3xl bg-(--primary) px-3 py-2 text-sm cursor-pointer text-white hover:bg-(--primary-faded-bg)'>
+                <Plus/>
+                <button
+                  disabled={
+                    !groupName.trim() ||
+                    selectedUsers.length === 0 ||
+                    isCreatingGroup
+                  }
+                  onClick={() => startGroup()}
+                >
+                  {isCreatingGroup ? 'Creating...' : 'Submit Group'}
+                </button>
+              </div>
+            </div>}
           </div>
         </div>
       </section>

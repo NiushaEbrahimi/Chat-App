@@ -3,6 +3,7 @@
 :root {
   --primary: #b38ddc;
   --primary-faded: rgba(179, 141, 220, 0.18);
+  --primary-faded-bg: rgba(179, 141, 220, 0.6);
   --secondary: #a9c2eb;
   --secondary-faded: rgba(169, 194, 235, 0.2);
   --surface: rgba(255, 255, 255, 0.92);

@@ -21,11 +21,9 @@ const formatMessageTimestamp = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
 
-  const today = new Date();
-  const isToday = date.toDateString() === today.toDateString();
   const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
-  return isToday ? `${time}` : `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} • ${time}`;
+  return `${time}`;
 };
 
 const formatDayLabel = (value: string) => {
@@ -90,7 +88,8 @@ const MessageThread = ({ roomId }: Props) => {
     document.querySelectorAll('[data-message-id]').forEach(el => observer.observe(el));
     return () => observer.disconnect();
   }, [messages, sendMessage]);
-  // TODO: change the header style
+
+  const isTyping = useSelector((s: RootState) => s.chat.typingUsers[roomId] ?? []);
   return (
     <div className='flex h-full flex-col rounded-[28px] border border-(--border) bg-(--secondary-faded) shadow-inner shadow-[rgba(106,17,203,0.08)]'>
 
@@ -99,8 +98,10 @@ const MessageThread = ({ roomId }: Props) => {
               <div className='w-full flex justify-center'>
                 <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                   <div className='flex flex-col items-center text-center'>
-                    <p className='text-black font-semibold'>{activeRoom.meta?.name==="Saved Messages" ? "Saved Messages" : activeRoom.meta?.username}</p>
-                    <p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>
+                    <p className='text-black font-semibold'>{activeRoom.meta?.name==="Saved Messages" ? "Saved Messages" : activeRoom.roomType==="group" ? activeRoom.meta?.name :  activeRoom.meta?.username}</p>
+                    { isTyping.length > 0 
+                      ?<p className='text-gray-500 text-sm'>{activeRoom.roomType==="group" ? `${isTyping.map(user => user.username).join(', ')} is` : ''} typing...</p>
+                      :<p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>}
                   </div>
                 </GlassCard>
               </div>
