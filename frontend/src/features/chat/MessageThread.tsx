@@ -148,25 +148,30 @@ const MessageThread = ({ roomId }: Props) => {
               )}
               <div
                 data-message-id={message.id}
-                className={`flex flex-col gap-2 ${isCurrentUser ? 'items-end' : 'items-start'}`}
+                className={`flex gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
               >
                 {activeRoom?.roomType === 'group' && !isCurrentUser && (
-                  <div className='text-[11px] text-(--primary)'>
-                    {message.sender.username}
+                    <UserAvatar avatar={message.sender.avatar} inputSize={42} username={""}  />
+                  )}
+                <div className='flex flex-col min-w-[10%] max-w-[70%]'>
+                  <div className={`rounded-xl border border-(--border) px-2 ${(activeRoom?.roomType === 'group' && !isCurrentUser) ? "pt-5" : "pt-2"} pb-4 ${textSizeClass} shadow-sm ${isCurrentUser ? 'bg-(--primary) text-white' : 'bg-white/90 text-slate-900'} relative`}>
+                    {activeRoom?.roomType === 'group' && !isCurrentUser && (
+                      <div className='absolute left-2 top-1 text-[13px] text-(--primary)'>
+                        {message.sender.username}
+                      </div>
+                    )}
+                    {message.content}
+                    <div className={`absolute right-2 bottom-0 text-[10px] ${isCurrentUser ? 'text-white/70' : 'text-slate-400'}`}>
+                      {formatMessageTimestamp(message.created_at)}
+                    </div>
                   </div>
-                )}
-                <div className={`min-w-[10%] max-w-[70%] rounded-xl border border-(--border) px-2 pt-2 pb-4 ${textSizeClass} shadow-sm ${isCurrentUser ? 'bg-(--primary) text-white' : 'bg-white/90 text-slate-900'} relative`}>
-                  {message.content}
-                  <div className={`absolute right-2 bottom-0 text-[10px] ${isCurrentUser ? 'text-white/70' : 'text-slate-400'}`}>
-                    {formatMessageTimestamp(message.created_at)}
-                  </div>
+                  {/* TODO: fix this read by */}
+                  {activeRoom?.roomType === 'group' && message.reads.length > 0 && (
+                    <div className='text-[10px] text-(--primary)/80'>
+                      Read by {message.reads.map(r => r.user.username).join(', ')}
+                    </div>
+                  )}
                 </div>
-
-                {activeRoom?.roomType === 'group' && message.reads.length > 0 && (
-                  <div className='text-[10px] text-(--primary)/80'>
-                    Read by {message.reads.map(r => r.user.username).join(', ')}
-                  </div>
-                )}
               </div>
             </div>
           );
