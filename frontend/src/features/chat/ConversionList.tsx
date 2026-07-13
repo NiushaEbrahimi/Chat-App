@@ -1,12 +1,12 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { Bookmark, PlusCircle, Search, Menu, Cog, UserRoundPlus, EllipsisVertical, Sun, Moon, X, Plus } from 'lucide-react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useUserSearch } from '../../hooks/useUserSearch';
 
-import { setActiveRoom, setRooms, toggleTheme } from '../../store/slices/chatSlice';
+import { setActiveRoom, toggleTheme } from '../../store/slices/chatSlice';
 import { setNewConvo, offNewConvo } from '../../store/slices/newConvo';
 import { openSettings, openProfile, closePanel } from '../../store/slices/uiSlice';
 import type { RootState } from '../../store';
@@ -209,16 +209,28 @@ const ConversationList = () => {
               type='button'
               onClick={() => {
                 const roomType = room.is_group ? 'group' : room.is_saved_messages ? 'saved_message' : 'user';
-                const meta = room.is_group || room.is_saved_messages
-                  ? room
-                  : otherMember
-                    ? { 
-                        id: otherMember.id, 
-                        username: otherMember.username, 
-                        avatar: otherMember.avatar, 
-                        is_online: onlineUserIds.includes(otherMember.id) 
+                const meta = room.is_group
+                  ? {
+                      id: room.id,
+                      name: room.name,
+                      avatar_url: room.avatar_url,
+                      members: room.members,
+                      is_group: true,
+                    }
+                  : room.is_saved_messages
+                    ? {
+                        id: room.id,
+                        name: room.name,
+                        is_saved_messages: true,
                       }
-                    : null;
+                    : otherMember
+                      ? {
+                          id: otherMember.id,
+                          username: otherMember.username,
+                          avatar: otherMember.avatar,
+                          is_online: onlineUserIds.includes(otherMember.id),
+                        }
+                      : null;
                 dispatch(closePanel());
                 dispatch(setActiveRoom({ roomId: room.id, roomType, meta }));
               }}
@@ -269,9 +281,6 @@ function AddNewConverstaion(){
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
 
   const { data, isLoading } = useUserSearch(query)
-  const queryClient = useQueryClient();
-
-  const rooms = useSelector((s: RootState) => s.chat.rooms);
   const onlineUserIds = useSelector((s: RootState) => s.chat.onlineUserIds);
   const currentUserId = useSelector((s: RootState) => s.auth.user?.id);
 

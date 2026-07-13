@@ -3,15 +3,18 @@ import UserAvatar from '../../shared/UserAvatar';
 import { useDispatch, useSelector } from 'react-redux';
 import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 import type { RootState } from '../../store';
-import { ArrowLeft, MessageCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Trash2, Eraser } from 'lucide-react';
 import { closePanel } from '../../store/slices/uiSlice';
-import { deleteRoom } from '../../api/chat';
-import { setActiveRoom } from '../../store/slices/chatSlice';
+import { deleteRoom, clearMessages } from '../../api/chat';
+import { setActiveRoom, setMessages } from '../../store/slices/chatSlice';
+import { useAuth } from '../../hooks/useAuth';
+import type { ApiError } from '../../types/errorTypes';
 
 export default function UserInfo() {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
+  const { user } = useAuth();
 
   const userAvatar = resolveAvatarUrl(activeRoom.meta?.avatar ?? undefined);
   const username = activeRoom.meta?.username ?? 'Unknown User';
@@ -24,14 +27,31 @@ export default function UserInfo() {
       dispatch(closePanel());
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       console.error('Delete failed:', error);
+    },
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: () => clearMessages(activeRoom.roomId!),
+    onSuccess: () => {
+      dispatch(setMessages({ roomId: activeRoom.roomId!, messages: [] }));
+      queryClient.invalidateQueries({ queryKey: ['messages', activeRoom.roomId] });
+    },
+    onError: (error: ApiError) => {
+      console.error('Clear failed:', error);
     },
   });
 
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
       deleteMutation.mutate();
+    }
+  };
+
+  const handleClear = () => {
+    if (window.confirm('Clear all messages in this chat? This cannot be undone.')) {
+      clearMutation.mutate();
     }
   };
 
@@ -63,6 +83,16 @@ export default function UserInfo() {
           <MessageCircle size={18} />
           Send Message
         </button>
+        {user && activeRoom.meta?.id === user.id && (
+          <button
+            onClick={handleClear}
+            disabled={clearMutation.isPending}
+            className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-orange-300 text-orange-500 font-semibold transition hover:bg-orange-50 cursor-pointer disabled:opacity-50'
+          >
+            <Eraser size={18} />
+            {clearMutation.isPending ? 'Clearing...' : 'Clear Chat'}
+          </button>
+        )}
         <button
           onClick={handleDelete}
           className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-red-300 text-red-500 font-semibold transition hover:bg-red-50 cursor-pointer'

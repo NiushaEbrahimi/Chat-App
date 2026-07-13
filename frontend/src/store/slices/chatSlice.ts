@@ -11,13 +11,15 @@ interface Meta {
   id?: string;
   username?: string;
   avatar?: string | null;
+  avatar_url?: string;
   is_online?: boolean;
   name?: string | null;
-  avatar_url?: string;
   members?: ChatUser[];
+  is_group?: boolean;
+  is_saved_messages?: boolean;
 }
 
-type MetaType = Meta | Room | null
+type MetaType = Meta | null
 
 interface ChatState {
   theme: "dark" | "light"

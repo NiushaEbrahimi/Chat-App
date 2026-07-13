@@ -8,6 +8,7 @@ import UserSearchList from './UserSearchList';
 import type { User } from './UserSearchList';
 import type { RootState } from '../../../store';
 import { setActiveRoom } from '../../../store/slices/chatSlice';
+import type { ApiError } from '../../../types/errorTypes';
 
 interface AddMemberModalProps {
   roomId: string;
@@ -48,7 +49,7 @@ export default function AddMemberModal({ roomId, currentMemberIds, onClose }: Ad
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
       onClose();
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       console.error('Failed to add members:', error);
     },
   });

@@ -4,12 +4,13 @@ import UserAvatar from '../../shared/UserAvatar';
 import { useDispatch, useSelector } from 'react-redux';
 import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 import type { RootState } from '../../store';
-import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
-import { closePanel } from '../../store/slices/uiSlice';
+import { ArrowLeft, Plus, Pencil, Trash2, UserMinus, Eraser } from 'lucide-react';
+import { closePanel, openUserInfo } from '../../store/slices/uiSlice';
 import { useAuth } from '../../hooks/useAuth';
-import { updateRoom, deleteRoom } from '../../api/chat';
-import { setActiveRoom } from '../../store/slices/chatSlice';
+import { updateRoom, deleteRoom, clearMessages } from '../../api/chat';
+import { setActiveRoom, setMessages } from '../../store/slices/chatSlice';
 import AddMemberModal from './components/AddMemberModal';
+import type { ApiError } from '../../types/errorTypes';
 
 export default function GroupInfo() {
   const dispatch = useDispatch();
@@ -50,7 +51,7 @@ export default function GroupInfo() {
       setAvatarPreview(null);
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       console.error('Update failed:', error);
     },
   });
@@ -62,8 +63,34 @@ export default function GroupInfo() {
       dispatch(closePanel());
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       console.error('Delete failed:', error);
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const newMemberIds = members.filter(m => m.id !== memberId).map(m => m.id);
+      const formData = new FormData();
+      newMemberIds.forEach(id => formData.append('member_ids', id));
+      await updateRoom(activeRoom.roomId!, formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    },
+    onError: (error: ApiError) => {
+      console.error('Remove member failed:', error);
+    },
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: () => clearMessages(activeRoom.roomId!),
+    onSuccess: () => {
+      dispatch(setMessages({ roomId: activeRoom.roomId!, messages: [] }));
+      queryClient.invalidateQueries({ queryKey: ['messages', activeRoom.roomId] });
+    },
+    onError: (error: ApiError) => {
+      console.error('Clear failed:', error);
     },
   });
 
@@ -97,6 +124,33 @@ export default function GroupInfo() {
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
       deleteMutation.mutate();
+    }
+  };
+
+  const handleClear = () => {
+    if (window.confirm('Clear all messages in this group? This cannot be undone.')) {
+      clearMutation.mutate();
+    }
+  };
+
+  const handleMemberClick = (member: typeof members[0]) => {
+    dispatch(setActiveRoom({
+      roomId: activeRoom.roomId,
+      roomType: 'user',
+      meta: {
+        id: member.id,
+        username: member.username,
+        avatar: member.avatar,
+        is_online: member.is_online,
+      },
+    }));
+    dispatch(openUserInfo());
+  };
+
+  const handleRemoveMember = (e: React.MouseEvent, memberId: string) => {
+    e.stopPropagation();
+    if (window.confirm('Remove this member from the group?')) {
+      removeMemberMutation.mutate(memberId);
     }
   };
 
@@ -196,7 +250,8 @@ export default function GroupInfo() {
           {members.map((member) => (
             <div
               key={member.id}
-              className='flex items-center justify-between p-3 rounded-[14px] border border-(--primary-faded) hover:bg-(--primary-faded) transition'
+              className='flex items-center justify-between p-3 rounded-[14px] border border-(--primary-faded) hover:bg-(--primary-faded) transition cursor-pointer'
+              onClick={() => handleMemberClick(member)}
             >
               <div className='flex items-center gap-3'>
                 <UserAvatar avatar={member.avatar} inputSize={40} username={member.username} />
@@ -210,13 +265,32 @@ export default function GroupInfo() {
               <div className='flex items-center gap-2'>
                 <span className={`w-2.5 h-2.5 rounded-full ${member.is_online ? 'bg-green-500' : 'bg-gray-300'}`} />
                 <span className='text-xs text-gray-500'>{member.is_online ? 'Online' : 'Offline'}</span>
+                {isCreator && member.id !== user?.id && (
+                  <button
+                    onClick={(e) => handleRemoveMember(e, member.id)}
+                    className='ml-2 p-1 rounded-full hover:bg-red-100 text-red-500 transition'
+                    title='Remove member'
+                  >
+                    <UserMinus size={14} />
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className='mt-6 pt-4 border-t border-(--border)'>
+      <div className='mt-6 pt-4 border-t border-(--border) flex flex-col gap-3'>
+        {isCreator && (
+          <button
+            onClick={handleClear}
+            disabled={clearMutation.isPending}
+            className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-orange-300 text-orange-500 font-semibold transition hover:bg-orange-50 cursor-pointer disabled:opacity-50'
+          >
+            <Eraser size={18} />
+            {clearMutation.isPending ? 'Clearing...' : 'Clear Chat'}
+          </button>
+        )}
         <button
           onClick={handleDelete}
           className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-red-300 text-red-500 font-semibold transition hover:bg-red-50 cursor-pointer'

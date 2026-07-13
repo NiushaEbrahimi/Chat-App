@@ -21,3 +21,6 @@ export const updateRoom = (roomId: string, data: FormData) =>
 
 export const deleteRoom = (roomId: string) =>
   apiClient.delete(`/api/chat/rooms/${roomId}/`);
+
+export const clearMessages = (roomId: string) =>
+  apiClient.delete(`/api/chat/rooms/${roomId}/clear/`);
