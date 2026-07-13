@@ -101,7 +101,7 @@ export default function GroupInfo() {
   };
 
   return (
-    <div className='w-full h-full flex flex-col rounded-[28px] bg-(--surface) p-8'>
+    <div className='w-full h-full flex flex-col rounded-[28px] bg-(--surface) p-8 overflow-y-auto'>
       <div className='flex items-center mb-6 text-(--primary)'>
         <ArrowLeft className='mr-2 cursor-pointer' onClick={() => dispatch(closePanel())} />
         <h2 className='text-2xl font-semibold'>Group Info</h2>

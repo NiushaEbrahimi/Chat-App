@@ -148,7 +148,9 @@ const MessageThread = ({ roomId }: Props) => {
           const isCurrentUser = currentUser?.id === message.sender.id;
           const previousMessage = messages[index - 1];
           const showDayLabel = index === 0 || formatDayLabel(message.created_at) !== formatDayLabel(previousMessage?.created_at ?? '');
-          const usersRead =  message.reads.map(r => r.user.username).filter( r => r!=message.sender.username);
+          const usersRead = message.reads
+            .filter(r => r.user.id !== currentUser?.id)
+            .map(r => r.user.username);
 
           return (
             <div key={message.id}>
@@ -178,8 +180,7 @@ const MessageThread = ({ roomId }: Props) => {
                       {formatMessageTimestamp(message.created_at)}
                     </div>
                   </div>
-                  {/* TODO: fix this read by */}
-                  {activeRoom?.roomType === 'group' && usersRead.length > 0 && (
+                  {isCurrentUser && usersRead.length > 0 && (
                     <div className='text-[10px] text-(--primary)/80'>
                       Read by {usersRead.join(', ')}
                     </div>

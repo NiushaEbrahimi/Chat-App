@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Room, Message, MessageRead, Reaction
 from django.contrib.auth import get_user_model
+from django.db.models import Count, Q
 
 User = get_user_model()
 
@@ -53,6 +54,7 @@ class RoomSerializer(serializers.ModelSerializer):
     )
     last_message = serializers.SerializerMethodField()
     avatar_url = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
 
     def get_avatar_url(self, obj):
         request = self.context.get('request')
@@ -72,12 +74,27 @@ class RoomSerializer(serializers.ModelSerializer):
             return MessageSerializer(last).data
         return None
 
+    def get_unread_count(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user:
+            return 0
+        # saved messages never have unread
+        if obj.is_saved_messages:
+            return 0
+        # count messages in this room not read by the current user
+        read_message_ids = MessageRead.objects.filter(
+            user=request.user
+        ).values_list('message_id', flat=True)
+        return obj.messages.exclude(id__in=read_message_ids).exclude(
+            sender=request.user
+        ).count()
+
     class Meta:
         model = Room
         fields = (
             'id', 'name', 'is_group', 'is_saved_messages',
             'members', 'member_ids', 'last_message',
-            'created_at', 'avatar_url',  # avatar_url not avatar
+            'created_at', 'avatar_url', 'unread_count',
         )
         read_only_fields = ('id', 'created_at')
 

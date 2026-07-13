@@ -59,10 +59,9 @@ const chatSlice = createSlice({
     },
     // called when React Query fetches the room list
     setRooms: (state, action: PayloadAction<Room[]>) => {
-      const existingRooms = new Map(state.rooms.map(room => [room.id, room]));
       state.rooms = sortRoomsByLatestMessage(action.payload.map(room => ({
         ...room,
-        unreadCount: room.unreadCount ?? existingRooms.get(room.id)?.unreadCount ?? 0,
+        unreadCount: (room as any).unread_count ?? room.unreadCount ?? 0,
       })));
     },
 

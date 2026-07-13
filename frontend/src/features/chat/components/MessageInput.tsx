@@ -1,6 +1,9 @@
 // src/features/chat/MessageInput.tsx
 import { useState, useRef, useCallback } from 'react';
 import { useWebSocket } from '../../../hooks/useWebSocket';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../../store';
 
 interface Props {
   roomId: string;
@@ -11,6 +14,9 @@ const MessageInput = ({ roomId }: Props) => {
   const { sendMessage } = useWebSocket();
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
+  const queryClient = useQueryClient();
+  const rooms = useSelector((s: RootState) => s.chat.rooms);
+  const isFirstMessage = !rooms.some(r => r.id === roomId);
 
   const handleTyping = useCallback(() => {
     // send typing_start only once per typing session
@@ -41,6 +47,13 @@ const MessageInput = ({ roomId }: Props) => {
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
     isTyping.current = false;
     sendMessage({ type: 'typing_stop', room_id: roomId });
+
+    // if this is a new room (not in rooms list), invalidate to fetch updated list
+    if (isFirstMessage) {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      }, 500);
+    }
 
     setValue('');
   };

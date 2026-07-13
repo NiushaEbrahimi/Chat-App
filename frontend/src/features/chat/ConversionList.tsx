@@ -200,7 +200,7 @@ const ConversationList = () => {
               ? 'You: '
               : '';
           const previewText = room.last_message ? `${senderLabel}${room.last_message.content}` : 'No messages yet';
-          const unreadCount = room.unreadCount ?? 0;
+          const unreadCount = room.is_saved_messages ? 0 : (room.unreadCount ?? 0);
           const isUnread = unreadCount > 0;
 
           return (
@@ -286,12 +286,6 @@ function AddNewConverstaion(){
   onSuccess: (response) => {
     const room = response.data;
 
-    const exists = rooms.some(r => r.id === room.id);
-
-    if (!exists) {
-      dispatch(setRooms([room, ...rooms]));
-    }
-
     dispatch(closePanel());
 
     dispatch(
@@ -299,17 +293,11 @@ function AddNewConverstaion(){
         roomId: room.id,
         roomType: 'group',
         meta: {
-          id: room.id,
-          username: room.name,
-          avatar: room.avatar,
-          is_online: false,
+          ...room,
+          members: room.members,
         },
       })
     );
-
-    queryClient.invalidateQueries({
-      queryKey: ['rooms'],
-    });
 
     dispatch(offNewConvo());
 
@@ -325,20 +313,12 @@ function AddNewConverstaion(){
 
     onSuccess: (response) => {
       const room = response.data;
-      // add to sidebar if it's a brand new room
-      const exists = rooms.some(r => r.id === room.id);
-      if (!exists) {
-        dispatch(setRooms([room, ...rooms]));
-      }
 
       // open the room — compute meta for header (other member)
       const other = room.members.find((m: ChatUser) => m.id !== currentUserId);
       const meta = other ? { id: other.id, username: other.username, avatar: other.avatar, is_online: onlineUserIds.includes(other.id) } : null;
       dispatch(closePanel());
       dispatch(setActiveRoom({ roomId: room.id, roomType: 'user', meta }));
-
-      // refresh the rooms list in the background
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
 
       dispatch(offNewConvo());
     },

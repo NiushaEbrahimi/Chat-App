@@ -20,7 +20,7 @@ const TypingIndicator = ({ roomId }: Props) => {
     : `${typingUsers.map(u => u.username).join(', ')} are typing...`;
 
   return (
-    <div className='mx-6 mb-2 rounded-full bg-white/80 px-4 py-2 text-xs text-[color:var(--primary)] shadow-sm'>
+    <div className='mx-6 mb-2 rounded-full bg-white/80 px-4 py-2 text-xs text-(--primary) shadow-sm'>
       {text}
     </div>
   );
