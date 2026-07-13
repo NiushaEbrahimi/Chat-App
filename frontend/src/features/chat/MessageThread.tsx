@@ -7,12 +7,11 @@ import { fetchMessages } from '../../api/chat';
 import { setMessages } from '../../store/slices/chatSlice';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useTextSize } from '../../hooks/useTextSize';
-import MessageInput from './MessageInput';
-import TypingIndicator from './TypingIndicator';
+import MessageInput from './components/MessageInput';
 import type { Message } from '../../types/chatTypes';
 import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
-import { openRoomEdit } from '../../store/slices/uiSlice';
+import { openGroupInfo } from '../../store/slices/uiSlice';
 
 interface Props {
   roomId: string;
@@ -97,7 +96,10 @@ const MessageThread = ({ roomId }: Props) => {
           <div className={`sticky h-0 top-12 z-10 rounded-[28px] flex justify-center items-center px-10`}>
             <div 
               className='flex-1 flex justify-center'
-              onClick={()=>{dispatch(openRoomEdit())}}
+              onClick={()=>{
+                if(activeRoom.roomType==="group")dispatch(openGroupInfo())
+                if(activeRoom.roomType==="user")dispatch(openGroupInfo())
+              }}
             >
               <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex flex-col items-center text-center'>
@@ -109,7 +111,7 @@ const MessageThread = ({ roomId }: Props) => {
               </GlassCard>
             </div>
             <div
-              onClick={()=>{dispatch(openRoomEdit())}}
+              onClick={()=>{dispatch(openGroupInfo())}}
             >
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>
@@ -136,6 +138,7 @@ const MessageThread = ({ roomId }: Props) => {
           const isCurrentUser = currentUser?.id === message.sender.id;
           const previousMessage = messages[index - 1];
           const showDayLabel = index === 0 || formatDayLabel(message.created_at) !== formatDayLabel(previousMessage?.created_at ?? '');
+          const usersRead =  message.reads.map(r => r.user.username).filter( r => r!=message.sender.username);
 
           return (
             <div key={message.id}>
@@ -151,9 +154,9 @@ const MessageThread = ({ roomId }: Props) => {
                 className={`flex gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
               >
                 {activeRoom?.roomType === 'group' && !isCurrentUser && (
-                    <UserAvatar avatar={message.sender.avatar} inputSize={42} username={""}  />
+                    <UserAvatar avatar={message.sender.avatar} inputSize={42} username={message.sender.username}  />
                   )}
-                <div className='flex flex-col min-w-[10%] max-w-[70%]'>
+                <div className={`flex flex-col min-w-[10%] max-w-[70%]`}>
                   <div className={`rounded-xl border border-(--border) px-2 ${(activeRoom?.roomType === 'group' && !isCurrentUser) ? "pt-5" : "pt-2"} pb-4 ${textSizeClass} shadow-sm ${isCurrentUser ? 'bg-(--primary) text-white' : 'bg-white/90 text-slate-900'} relative`}>
                     {activeRoom?.roomType === 'group' && !isCurrentUser && (
                       <div className='absolute left-2 top-1 text-[13px] text-(--primary)'>
@@ -166,9 +169,9 @@ const MessageThread = ({ roomId }: Props) => {
                     </div>
                   </div>
                   {/* TODO: fix this read by */}
-                  {activeRoom?.roomType === 'group' && message.reads.length > 0 && (
+                  {activeRoom?.roomType === 'group' && usersRead.length > 0 && (
                     <div className='text-[10px] text-(--primary)/80'>
-                      Read by {message.reads.map(r => r.user.username).join(', ')}
+                      Read by {usersRead.join(', ')}
                     </div>
                   )}
                 </div>
@@ -179,7 +182,6 @@ const MessageThread = ({ roomId }: Props) => {
         <div ref={bottomRef} />
       </div>
 
-      <TypingIndicator roomId={roomId} />
       <MessageInput roomId={roomId} />
     </div>
   );

@@ -1,6 +1,6 @@
 // src/features/chat/MessageInput.tsx
 import { useState, useRef, useCallback } from 'react';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../../hooks/useWebSocket';
 
 interface Props {
   roomId: string;

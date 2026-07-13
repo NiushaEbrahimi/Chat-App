@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Room, Message } from '../../types/chatTypes';
+import type { ChatUser } from '../../types/chatTypes';
 
 interface TypingUser {
   userId: string;
@@ -13,9 +14,10 @@ interface Meta {
   is_online?: boolean;
   name?: string | null;
   avatar_url?: string;
+  members?: ChatUser[];
 }
 
-type MetaType = Meta | null
+type MetaType = Meta | Room | null
 
 interface ChatState {
   theme: "dark" | "light"

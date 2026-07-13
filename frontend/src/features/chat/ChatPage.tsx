@@ -11,6 +11,7 @@ import MessageThread from './MessageThread';
 import type { RootState } from '../../store';
 import ProfileEdit from './ProfileEdit';
 import Settings from './Settings';
+import GroupInfo from './GroupInfo';
 
 const ChatPage = () => {
   const dispatch = useDispatch();
@@ -49,9 +50,17 @@ const ChatPage = () => {
           <div className='flex h-full items-center justify-center text-slate-500'>
             <Settings/>
           </div>
-        ) : activePanel === 'room-edit' ? (
+        ) : activePanel === 'group-info' ? (
           <div className='flex h-full items-center justify-center text-slate-500'>
-            <Settings/>
+            <GroupInfo/>
+          </div>
+        ) : activePanel === 'saved-message-info' ? (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            <GroupInfo/>
+          </div>
+        ) : activePanel === 'user-info' ? (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            <GroupInfo/>
           </div>
         ) :
         activeRoom.roomId ? (

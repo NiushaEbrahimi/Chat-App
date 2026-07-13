@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-export type OpenPanel = "profile" | "settings" | "room-edit" | null;
+export type OpenPanel = "profile" | "settings" | "group-info" | "user-info" | "saved-message-info" | null;
 export type TextSize = "small" | "medium" | "large";
 export type ColorTheme = "purple" | "blue" | "pink" | "green" | "orange" | "indigo";
 export type Language = "en" | "es" | "fr" | "de";
@@ -35,8 +35,14 @@ const uiSlice = createSlice({
     openSettings: (state) => {
       state.openPanel = "settings";
     },
-    openRoomEdit: (state) => {
-      state.openPanel = "room-edit";
+    openGroupInfo: (state) => {
+      state.openPanel = "group-info";
+    },
+    openUserInfo: (state) => {
+      state.openPanel = "user-info";
+    },
+    openSavedMessgeInfo: (state) => {
+      state.openPanel = "saved-message-info";
     },
     setPanel: (state, action: PayloadAction<OpenPanel>) => {
       state.openPanel = action.payload;
@@ -114,5 +120,5 @@ const applyTheme = (theme: ColorTheme) => {
   }
 };
 
-export const { openProfile, openSettings, openRoomEdit, setPanel, closePanel, setTextSize, setColorTheme, setNotificationsEnabled, setLanguage } = uiSlice.actions;
+export const { openProfile, openSettings, openGroupInfo, setPanel, closePanel, setTextSize, setColorTheme, setNotificationsEnabled, setLanguage } = uiSlice.actions;
 export default uiSlice.reducer;

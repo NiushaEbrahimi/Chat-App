@@ -1,7 +1,7 @@
-// src/features/chat/TypingIndicator.tsx
+// not used for now ( don't know if i like the istyping in header or down in MessageThread)
 import { useSelector } from 'react-redux';
-import type { RootState } from '../../store';
-import { useAuth } from '../../hooks/useAuth';
+import type { RootState } from '../../../store';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface Props {
   roomId: string;
