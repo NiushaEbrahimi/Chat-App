@@ -16,7 +16,8 @@ import { fetchSavedMessage, createRoom } from '../../api/chat';
 import useClickOutside from '../../hooks/useOutside';
 
 import RoomAvatar from './components/RoomAvatar';
-import Spinner from '../../shared/Spinner';
+import UserSearchList from './components/UserSearchList';
+import type { User } from './components/UserSearchList';
 import UserAvatar from '../../shared/UserAvatar';
 import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 
@@ -40,7 +41,6 @@ const MenuList = ( {setMenuDisplay} :{setMenuDisplay : React.Dispatch<React.SetS
       <div className='relative flex flex-col gap-2'>
 
         <button
-        // TODO
           onClick={() => {dispatch(openProfile()); setMenuDisplay(false)}}
           className='w-full inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/90 px-4 py-2 text-sm font-medium text-(--primary) transition hover:bg-(--primary-faded)'
         >
@@ -260,13 +260,6 @@ const ConversationList = () => {
   );
 };
 
-type User = {
-  avatar : null | string
-  id : string
-  is_online : boolean
-  username : string
-}
-
 function AddNewConverstaion(){
   const dispatch = useDispatch()
 
@@ -400,56 +393,25 @@ function AddNewConverstaion(){
             </div>
           </div>
           <div className='w-full flex-1 space-y-3 overflow-y-auto px-2'>
-            {isLoading && <Spinner />}
-            {data?.map((user: User) => (
-              <div key={user.id}>
-                <button
-                  type='button'
-                  className={`flex w-full items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition hover:border-(--primary) hover:bg-(--primary-faded)
-                  ${
-                    selectedUsers.some(u => u.id === user.id)
-                      ? 'border-(--primary) bg-(--primary-faded)'
-                      : 'border-(--border) bg-(--surface)'
-                  }`}
-                  onClick={() => {
-                    if (makingGroup) {
-                      setSelectedUsers(prev => {
-                        const exists = prev.some(u => u.id === user.id);
-
-                        if (exists) {
-                          return prev.filter(u => u.id !== user.id);
-                        }
-
-                        return [...prev, user];
-                      });
-
-                      return;
+            <UserSearchList
+              users={data ?? []}
+              isLoading={isLoading}
+              selectedUsers={makingGroup ? selectedUsers : []}
+              onUserClick={(user) => {
+                if (makingGroup) {
+                  setSelectedUsers(prev => {
+                    const exists = prev.some(u => u.id === user.id);
+                    if (exists) {
+                      return prev.filter(u => u.id !== user.id);
                     }
-
-                    if (!isPending) {
-                      startChat({
-                        userId: user.id,
-                        username: user.username,
-                      });
-                    }
-                  }}
-                >
-                  <UserAvatar avatar={resolveAvatarUrl(user.avatar)} inputSize={36} username={user.username} />
-                  <div className='flex flex-col'>
-                    <span className='text-sm font-medium text-slate-900'>{user.username}</span>
-                    <span className='text-xs text-(--primary)'>
-                      {onlineUserIds.includes(user.id) ? 'Online' : 'Offline'}
-                    </span>
-                  </div>
-                  {isPending && (
-                    <span className='ml-auto text-xs text-(--primary)'>Opening...</span>
-                  )}
-                </button>
-                {/* {index < data.length - 1 && (
-                  <div className='h-px bg-(--border) mt-3' />
-                )} */}
-              </div>
-            ))}
+                    return [...prev, user];
+                  });
+                } else if (!isPending) {
+                  startChat({ userId: user.id, username: user.username });
+                }
+              }}
+              loadingUserId={isPending ? undefined : undefined}
+            />
             {makingGroup && selectedUsers.length > 0 && (
               <div className='flex flex-wrap gap-2 justify-center'>
                 {selectedUsers.map(user => (

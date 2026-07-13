@@ -56,7 +56,8 @@ const ChatPage = () => {
           </div>
         ) : activePanel === 'saved-message-info' ? (
           <div className='flex h-full items-center justify-center text-slate-500'>
-            <GroupInfo/>
+            {/* TODO:  */}
+            <></>
           </div>
         ) : activePanel === 'user-info' ? (
           <div className='flex h-full items-center justify-center text-slate-500'>

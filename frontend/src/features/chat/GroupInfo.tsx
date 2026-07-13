@@ -9,6 +9,7 @@ import { closePanel } from '../../store/slices/uiSlice';
 import { useAuth } from '../../hooks/useAuth';
 import { updateRoom, deleteRoom } from '../../api/chat';
 import { setActiveRoom } from '../../store/slices/chatSlice';
+import AddMemberModal from './components/AddMemberModal';
 
 export default function GroupInfo() {
   const dispatch = useDispatch();
@@ -21,6 +22,7 @@ export default function GroupInfo() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showAddMember, setShowAddMember] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const members = activeRoom.meta?.members ?? [];
@@ -180,9 +182,12 @@ export default function GroupInfo() {
         <div className='flex items-center justify-between mb-2'>
           <h4 className='text-sm font-semibold text-(--primary) uppercase tracking-wide'>Members</h4>
           {isCreator && (
-            <button className='flex items-center gap-1 text-sm border border-(--primary) text-(--primary) px-3 py-1.5 rounded-full transition hover:bg-(--primary) hover:text-white cursor-pointer'>
+            <button
+              onClick={() => setShowAddMember(true)}
+              className='flex items-center gap-1 text-sm border border-(--primary) text-(--primary) px-3 py-1.5 rounded-full transition hover:bg-(--primary) hover:text-white cursor-pointer'
+            >
               <Plus size={14} />
-              Add
+              Add Member
             </button>
           )}
         </div>
@@ -220,6 +225,14 @@ export default function GroupInfo() {
           Delete Chat
         </button>
       </div>
+
+      {showAddMember && (
+        <AddMemberModal
+          roomId={activeRoom.roomId!}
+          currentMemberIds={members.map(m => m.id)}
+          onClose={() => setShowAddMember(false)}
+        />
+      )}
     </div>
   );
 }

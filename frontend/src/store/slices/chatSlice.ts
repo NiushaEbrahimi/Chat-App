@@ -66,7 +66,7 @@ const chatSlice = createSlice({
       })));
     },
 
-    setActiveRoom: (state, action: PayloadAction<{ roomId: string; roomType: "group" | "saved_message" | "user"; meta?: MetaType }>) => {
+    setActiveRoom: (state, action: PayloadAction<{ roomId: string | null; roomType: "group" | "saved_message" | "user"; meta?: MetaType }>) => {
       state.activeRoom.roomId = action.payload.roomId;
       state.activeRoom.roomType = action.payload.roomType;
       state.activeRoom.meta = action.payload.meta ?? null;
