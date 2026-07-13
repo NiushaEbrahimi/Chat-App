@@ -150,7 +150,6 @@ const ConversationList = () => {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const isTyping = useSelector((s: RootState) => s.chat.typingUsers)
-  console.log(isTyping)
 
   useClickOutside(wrapperRef, () => setMenuDisplay(false));
 
@@ -439,7 +438,7 @@ function AddNewConverstaion(){
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-slate-900'>{user.username}</span>
                     <span className='text-xs text-(--primary)'>
-                      {user.is_online ? 'Online' : 'Offline'}
+                      {onlineUserIds.includes(user.id) ? 'Online' : 'Offline'}
                     </span>
                   </div>
                   {isPending && (

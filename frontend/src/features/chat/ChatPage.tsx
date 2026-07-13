@@ -1,4 +1,3 @@
-// src/features/chat/ChatPage.tsx
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +11,7 @@ import type { RootState } from '../../store';
 import ProfileEdit from './ProfileEdit';
 import Settings from './Settings';
 import GroupInfo from './GroupInfo';
+import UserInfo from './UserInfo';
 
 const ChatPage = () => {
   const dispatch = useDispatch();
@@ -60,7 +60,7 @@ const ChatPage = () => {
           </div>
         ) : activePanel === 'user-info' ? (
           <div className='flex h-full items-center justify-center text-slate-500'>
-            <GroupInfo/>
+            <UserInfo/>
           </div>
         ) :
         activeRoom.roomId ? (

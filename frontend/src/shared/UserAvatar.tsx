@@ -5,8 +5,6 @@ import { Bookmark } from "lucide-react";
 
 
 export default function UserAvatar({avatar, inputSize = 36, username} : {avatar : string | null | undefined , inputSize : number, username : string | undefined | null}){
-  console.log("Avatar:", avatar);
-  console.log("Username:", username);
   const base: React.CSSProperties = {
     width: inputSize, height: inputSize, borderRadius: '50%',
     display: 'flex', alignItems: 'center', justifyContent: 'center',

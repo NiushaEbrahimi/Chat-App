@@ -120,5 +120,7 @@ const applyTheme = (theme: ColorTheme) => {
   }
 };
 
-export const { openProfile, openSettings, openGroupInfo, setPanel, closePanel, setTextSize, setColorTheme, setNotificationsEnabled, setLanguage } = uiSlice.actions;
+export const { openProfile, openSettings, openGroupInfo, openSavedMessgeInfo, openUserInfo,
+              setPanel, closePanel, setTextSize, setColorTheme, setNotificationsEnabled, setLanguage 
+            } = uiSlice.actions;
 export default uiSlice.reducer;

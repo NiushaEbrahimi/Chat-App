@@ -11,7 +11,7 @@ import MessageInput from './components/MessageInput';
 import type { Message } from '../../types/chatTypes';
 import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
-import { openGroupInfo } from '../../store/slices/uiSlice';
+import { openGroupInfo, openUserInfo } from '../../store/slices/uiSlice';
 
 interface Props {
   roomId: string;
@@ -98,7 +98,7 @@ const MessageThread = ({ roomId }: Props) => {
               className='flex-1 flex justify-center'
               onClick={()=>{
                 if(activeRoom.roomType==="group")dispatch(openGroupInfo())
-                if(activeRoom.roomType==="user")dispatch(openGroupInfo())
+                if(activeRoom.roomType==="user")dispatch(openUserInfo())
               }}
             >
               <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
