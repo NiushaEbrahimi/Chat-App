@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useUserSearch } from '../../hooks/useUserSearch';
 
-import { setActiveRoom, toggleTheme } from '../../store/slices/chatSlice';
+import { setActiveRoom, setPendingChat, toggleTheme } from '../../store/slices/chatSlice';
 import { setNewConvo, offNewConvo } from '../../store/slices/newConvo';
 import { openSettings, openProfile, closePanel } from '../../store/slices/uiSlice';
 import type { RootState } from '../../store';
@@ -333,6 +333,30 @@ function AddNewConverstaion(){
     },
   });
 
+  const handleStartChat = (userId: string, username: string, avatar: string | null) => {
+    const existingRoom = rooms.find((r: Room) =>
+      !r.is_group &&
+      !r.is_saved_messages &&
+      r.members.some(m => m.id === userId) &&
+      r.members.some(m => m.id === currentUserId)
+    );
+
+    if (existingRoom) {
+      const other = existingRoom.members.find((m: ChatUser) => m.id !== currentUserId);
+      dispatch(closePanel());
+      dispatch(setActiveRoom({ roomId: existingRoom.id, roomType: 'user', meta: other ?? existingRoom }));
+    } else {
+      dispatch(setPendingChat({
+        userId,
+        username,
+        avatar,
+        is_online: onlineUserIds.includes(userId),
+      }));
+      dispatch(closePanel());
+    }
+    dispatch(offNewConvo());
+  };
+
   return(
     <main className='fixed inset-0 z-150 flex items-center justify-center bg-slate-950/40 p-6'>
       <section className='w-full max-w-2xl min-h-100 rounded-4xl border border-(--border) bg-white/95 p-8 shadow-2xl'>
@@ -396,7 +420,7 @@ function AddNewConverstaion(){
                     return [...prev, user];
                   });
                 } else if (!isPending) {
-                  startChat({ userId: user.id, username: user.username });
+                  handleStartChat(user.id, user.username, user.avatar);
                 }
               }}
               loadingUserId={isPending ? undefined : undefined}

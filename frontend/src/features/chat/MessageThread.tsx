@@ -11,7 +11,7 @@ import MessageInput from './components/MessageInput';
 import type { Message } from '../../types/chatTypes';
 import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
-import { openGroupInfo, openUserInfo } from '../../store/slices/uiSlice';
+import { openGroupInfo, openUserInfo, setUserPanel } from '../../store/slices/uiSlice';
 import Spinner from '../../shared/Spinner';
 
 interface Props {
@@ -104,16 +104,27 @@ const MessageThread = ({ roomId }: Props) => {
     <div className='flex h-full flex-col rounded-[28px] border border-(--border) bg-(--secondary-faded) shadow-inner shadow-[rgba(106,17,203,0.08)]'>
 
           <div className={`sticky h-0 top-12 z-10 rounded-[28px] flex justify-center items-center px-10`}>
-            <div 
+            <div
               className='flex-1 flex justify-center'
               onClick={()=>{
-                if(activeRoom.roomType==="group")dispatch(openGroupInfo())
-                if(activeRoom.roomType==="user")dispatch(openUserInfo())
+                if(activeRoom.roomType==="group") dispatch(openGroupInfo())
+                if(activeRoom.roomType==="user") {
+                  dispatch(setUserPanel({
+                    roomId: activeRoom.roomId,
+                    meta: {
+                      id: activeRoom.meta?.id ?? '',
+                      username: activeRoom.meta?.username ?? '',
+                      avatar: activeRoom.meta?.avatar ?? null,
+                      is_online: activeRoom.meta?.is_online ?? false,
+                    },
+                  }));
+                  dispatch(openUserInfo());
+                }
               }}
             >
               <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex flex-col items-center text-center'>
-                  <p className='text-black font-semibold'>{activeRoom.meta?.name==="Saved Messages" ? "Saved Messages" : activeRoom.roomType==="group" ? activeRoom.meta?.name :  activeRoom.meta?.username}</p>
+                  <p className='text-black font-semibold'>{activeRoom.meta?.name==="Saved Messages" ? "Saved Messages" : activeRoom.meta?.username ? activeRoom.meta?.username : activeRoom.meta?.name}</p>
                   { isTyping.length > 0 
                     ?<p className='text-gray-500 text-sm'>{activeRoom.roomType==="group" ? `${isTyping.map(user => user.username).join(', ')} is` : ''} typing...</p>
                     :<p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>}
@@ -121,7 +132,21 @@ const MessageThread = ({ roomId }: Props) => {
               </GlassCard>
             </div>
             <div
-              onClick={()=>{dispatch(openGroupInfo())}}
+              onClick={()=>{
+                if(activeRoom.roomType==="group") dispatch(openGroupInfo())
+                if(activeRoom.roomType==="user") {
+                  dispatch(setUserPanel({
+                    roomId: activeRoom.roomId,
+                    meta: {
+                      id: activeRoom.meta?.id ?? '',
+                      username: activeRoom.meta?.username ?? '',
+                      avatar: activeRoom.meta?.avatar ?? null,
+                      is_online: activeRoom.meta?.is_online ?? false,
+                    },
+                  }));
+                  dispatch(openUserInfo());
+                }
+              }}
             >
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>

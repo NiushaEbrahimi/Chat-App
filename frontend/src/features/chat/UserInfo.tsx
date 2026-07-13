@@ -6,22 +6,30 @@ import type { RootState } from '../../store';
 import { ArrowLeft, MessageCircle, Trash2, Eraser } from 'lucide-react';
 import { closePanel } from '../../store/slices/uiSlice';
 import { deleteRoom, clearMessages } from '../../api/chat';
-import { setActiveRoom, setMessages } from '../../store/slices/chatSlice';
+import { setActiveRoom, setMessages, setPendingChat } from '../../store/slices/chatSlice';
 import { useAuth } from '../../hooks/useAuth';
 import type { ApiError } from '../../types/errorTypes';
+import type { Room } from '../../types/chatTypes';
 
 export default function UserInfo() {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
-  const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
+  const userPanelInfo = useSelector((s: RootState) => s.ui.userPanelInfo);
+  const rooms = useSelector((s: RootState) => s.chat.rooms);
+  const currentUserId = useSelector((s: RootState) => s.auth.user?.id);
   const { user } = useAuth();
 
-  const userAvatar = resolveAvatarUrl(activeRoom.meta?.avatar ?? undefined);
-  const username = activeRoom.meta?.username ?? 'Unknown User';
-  const isOnline = activeRoom.meta?.is_online ?? false;
+  const userAvatar = resolveAvatarUrl(userPanelInfo?.meta.avatar ?? undefined);
+  const username = userPanelInfo?.meta.username ?? 'Unknown User';
+  const isOnline = userPanelInfo?.meta.is_online ?? false;
+  const userId = userPanelInfo?.meta.id;
+  const roomId = userPanelInfo?.roomId;
 
   const deleteMutation = useMutation({
-    mutationFn: () => deleteRoom(activeRoom.roomId!),
+    mutationFn: () => {
+      if (!roomId) throw new Error('No room to delete');
+      return deleteRoom(roomId);
+    },
     onSuccess: () => {
       dispatch(setActiveRoom({ roomId: null, roomType: 'user' }));
       dispatch(closePanel());
@@ -33,10 +41,15 @@ export default function UserInfo() {
   });
 
   const clearMutation = useMutation({
-    mutationFn: () => clearMessages(activeRoom.roomId!),
+    mutationFn: () => {
+      if (!roomId) throw new Error('No room to clear');
+      return clearMessages(roomId);
+    },
     onSuccess: () => {
-      dispatch(setMessages({ roomId: activeRoom.roomId!, messages: [] }));
-      queryClient.invalidateQueries({ queryKey: ['messages', activeRoom.roomId] });
+      if (roomId) {
+        dispatch(setMessages({ roomId, messages: [] }));
+        queryClient.invalidateQueries({ queryKey: ['messages', roomId] });
+      }
     },
     onError: (error: ApiError) => {
       console.error('Clear failed:', error);
@@ -53,6 +66,31 @@ export default function UserInfo() {
     if (window.confirm('Clear all messages in this chat? This cannot be undone.')) {
       clearMutation.mutate();
     }
+  };
+
+  const handleSendMessage = () => {
+    const dmRoom = rooms.find((r: Room) =>
+      !r.is_group &&
+      !r.is_saved_messages &&
+      r.members.some(m => m.id === userPanelInfo?.meta.id) &&
+      r.members.some(m => m.id === currentUserId)
+    );
+
+    if (dmRoom) {
+      dispatch(setActiveRoom({
+        roomId: dmRoom.id,
+        roomType: 'user',
+        meta: dmRoom,
+      }));
+    } else if (userId) {
+      dispatch(setPendingChat({
+        userId,
+        username,
+        avatar: userPanelInfo?.meta.avatar ?? null,
+        is_online: isOnline,
+      }));
+    }
+    dispatch(closePanel());
   };
 
   return (
@@ -79,11 +117,14 @@ export default function UserInfo() {
       </div>
 
       <div className='mt-6 pt-4 border-t border-(--border) flex flex-col gap-3'>
-        <button className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] bg-(--primary) text-white font-semibold transition hover:bg-(--secondary) cursor-pointer'>
+        <button
+          onClick={handleSendMessage}
+          className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] bg-(--primary) text-white font-semibold transition hover:bg-(--secondary) cursor-pointer'
+        >
           <MessageCircle size={18} />
           Send Message
         </button>
-        {user && activeRoom.meta?.id === user.id && (
+        {user && userId === user.id && roomId && (
           <button
             onClick={handleClear}
             disabled={clearMutation.isPending}
@@ -93,13 +134,15 @@ export default function UserInfo() {
             {clearMutation.isPending ? 'Clearing...' : 'Clear Chat'}
           </button>
         )}
-        <button
-          onClick={handleDelete}
-          className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-red-300 text-red-500 font-semibold transition hover:bg-red-50 cursor-pointer'
-        >
-          <Trash2 size={18} />
-          Delete Chat
-        </button>
+        {roomId && (
+          <button
+            onClick={handleDelete}
+            className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-red-300 text-red-500 font-semibold transition hover:bg-red-50 cursor-pointer'
+          >
+            <Trash2 size={18} />
+            Delete Chat
+          </button>
+        )}
       </div>
     </div>
   );

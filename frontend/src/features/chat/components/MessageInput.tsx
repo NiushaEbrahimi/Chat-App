@@ -1,31 +1,34 @@
-// src/features/chat/MessageInput.tsx
 import { useState, useRef, useCallback } from 'react';
 import { useWebSocket } from '../../../hooks/useWebSocket';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../../../store';
+import { createRoom } from '../../../api/chat';
+import { setActiveRoom, setPendingChat } from '../../../store/slices/chatSlice';
+import type { ChatUser } from '../../../types/chatTypes';
 
 interface Props {
-  roomId: string;
+  roomId?: string;
 }
 
 const MessageInput = ({ roomId }: Props) => {
   const [value, setValue] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const { sendMessage } = useWebSocket();
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
   const queryClient = useQueryClient();
+  const dispatch = useDispatch();
   const rooms = useSelector((s: RootState) => s.chat.rooms);
-  const isFirstMessage = !rooms.some(r => r.id === roomId);
+  const pendingChat = useSelector((s: RootState) => s.chat.pendingChat);
+  const currentUserId = useSelector((s: RootState) => s.auth.user?.id);
 
   const handleTyping = useCallback(() => {
-    // send typing_start only once per typing session
+    if (!roomId) return;
     if (!isTyping.current) {
       isTyping.current = true;
       sendMessage({ type: 'typing_start', room_id: roomId });
     }
-
-    // reset the timer — if user stops typing for 2s, send typing_stop
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
     typingTimeout.current = setTimeout(() => {
       isTyping.current = false;
@@ -33,29 +36,61 @@ const MessageInput = ({ roomId }: Props) => {
     }, 2000);
   }, [roomId, sendMessage]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const content = value.trim();
-    if (!content) return;
+    if (!content || isSending) return;
 
-    sendMessage({
-      type: 'send_message',
-      room_id: roomId,
-      content,
-    });
+    setIsSending(true);
 
-    // stop typing indicator immediately on send
-    if (typingTimeout.current) clearTimeout(typingTimeout.current);
-    isTyping.current = false;
-    sendMessage({ type: 'typing_stop', room_id: roomId });
+    try {
+      if (pendingChat && !roomId) {
+        const response = await createRoom({
+          name: pendingChat.username,
+          is_group: false,
+          member_ids: [pendingChat.userId],
+        });
+        const newRoom = response.data;
+        const other = newRoom.members.find((m: ChatUser) => m.id !== currentUserId);
 
-    // if this is a new room (not in rooms list), invalidate to fetch updated list
-    if (isFirstMessage) {
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['rooms'] });
-      }, 500);
+        dispatch(setActiveRoom({
+          roomId: newRoom.id,
+          roomType: 'user',
+          meta: other ?? newRoom,
+        }));
+        dispatch(setPendingChat(null));
+
+        await queryClient.invalidateQueries({ queryKey: ['rooms'] });
+
+        sendMessage({
+          type: 'send_message',
+          room_id: newRoom.id,
+          content,
+        });
+      } else if (roomId) {
+        sendMessage({
+          type: 'send_message',
+          room_id: roomId,
+          content,
+        });
+
+        if (typingTimeout.current) clearTimeout(typingTimeout.current);
+        isTyping.current = false;
+        sendMessage({ type: 'typing_stop', room_id: roomId });
+
+        const isFirstMessage = !rooms.some(r => r.id === roomId);
+        if (isFirstMessage) {
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['rooms'] });
+          }, 500);
+        }
+      }
+
+      setValue('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setIsSending(false);
     }
-
-    setValue('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -71,16 +106,16 @@ const MessageInput = ({ roomId }: Props) => {
         value={value}
         onChange={e => { setValue(e.target.value); handleTyping(); }}
         onKeyDown={handleKeyDown}
-        placeholder='Type a message... (Enter to send)'
+        placeholder={pendingChat ? `Message @${pendingChat.username}` : 'Type a message... (Enter to send)'}
         rows={1}
         className='min-h-14 z-100 flex-1 resize-none rounded-[26px] border border-(--border) bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-(--primary) focus:ring-2 focus:ring-(--primary-faded)'
       />
       <button
         onClick={handleSend}
-        disabled={!value.trim()}
+        disabled={!value.trim() || isSending}
         className='rounded-[26px] bg-(--primary) px-5 py-3 text-sm font-semibold text-white transition hover:bg-(--secondary) disabled:cursor-not-allowed disabled:opacity-40'
       >
-        Send
+        {isSending ? 'Sending...' : 'Send'}
       </button>
     </div>
   );

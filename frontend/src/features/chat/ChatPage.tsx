@@ -7,6 +7,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 import { useThemeInitializer } from '../../hooks/useThemeInitializer';
 import ConversationList from './ConversionList';
 import MessageThread from './MessageThread';
+import PendingChat from './PendingChat';
 import type { RootState } from '../../store';
 import ProfileEdit from './ProfileEdit';
 import Settings from './Settings';
@@ -17,13 +18,10 @@ import Spinner from '../../shared/Spinner';
 const ChatPage = () => {
   const dispatch = useDispatch();
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
-  const activePanel = useSelector((s: RootState) => s.ui.openPanel );
+  const activePanel = useSelector((s: RootState) => s.ui.openPanel);
+  const pendingChat = useSelector((s: RootState) => s.chat.pendingChat);
 
-  // Initialize theme on mount and when it changes
   useThemeInitializer();
-
-  // initialise WebSocket for the whole session
-  // hook lives here so it's always connected while on chat page
   useWebSocket();
 
   const { data, isLoading } = useQuery({
@@ -65,13 +63,15 @@ const ChatPage = () => {
           </div>
         ) : activePanel === 'saved-message-info' ? (
           <div className='flex h-full items-center justify-center text-slate-500'>
-            {/* TODO:  */}
             <></>
           </div>
         ) : activePanel === 'user-info' ? (
           <div className='flex h-full items-center justify-center text-slate-500'>
             <UserInfo/>
           </div>
+        ) :
+        pendingChat ? (
+          <PendingChat />
         ) :
         activeRoom.roomId ? (
           <MessageThread roomId={activeRoom.roomId} />

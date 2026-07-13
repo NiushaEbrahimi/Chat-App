@@ -21,6 +21,13 @@ interface Meta {
 
 type MetaType = Meta | null
 
+interface PendingChat {
+  userId: string;
+  username: string;
+  avatar: string | null;
+  is_online: boolean;
+}
+
 interface ChatState {
   theme: "dark" | "light"
   rooms: Room[];
@@ -32,6 +39,7 @@ interface ChatState {
   };
   typingUsers: Record<string, TypingUser[]>;
   onlineUserIds: string[];
+  pendingChat: PendingChat | null;
 }
 
 const initialState: ChatState = {
@@ -41,6 +49,7 @@ const initialState: ChatState = {
   activeRoom: { roomId: null, roomType: "user", meta: null },
   typingUsers: {},
   onlineUserIds: [],
+  pendingChat: null,
 };
 
 const sortRoomsByLatestMessage = (rooms: Room[]) => {
@@ -168,11 +177,15 @@ const chatSlice = createSlice({
         });
       }
     },
+
+    setPendingChat: (state, action: PayloadAction<PendingChat | null>) => {
+      state.pendingChat = action.payload;
+    },
   },
 });
 
 export const {
-  toggleTheme, setRooms, setActiveRoom, setMessages,
+  toggleTheme, setRooms, setActiveRoom, setMessages, setPendingChat,
   addMessage, setTyping, setUserOnline, addReadReceipt,
 } = chatSlice.actions;
 

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
 import type { RootState } from '../../store';
 import { ArrowLeft, Plus, Pencil, Trash2, UserMinus, Eraser } from 'lucide-react';
-import { closePanel, openUserInfo } from '../../store/slices/uiSlice';
+import { closePanel, openUserInfo, setUserPanel } from '../../store/slices/uiSlice';
 import { useAuth } from '../../hooks/useAuth';
 import { updateRoom, deleteRoom, clearMessages } from '../../api/chat';
 import { setActiveRoom, setMessages } from '../../store/slices/chatSlice';
@@ -17,6 +17,7 @@ export default function GroupInfo() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
+  console.log(activeRoom)
 
   const [isEditing, setIsEditing] = useState(false);
   const [groupName, setGroupName] = useState(activeRoom.meta?.name ?? 'Unnamed Group');
@@ -134,9 +135,8 @@ export default function GroupInfo() {
   };
 
   const handleMemberClick = (member: typeof members[0]) => {
-    dispatch(setActiveRoom({
+    dispatch(setUserPanel({
       roomId: activeRoom.roomId,
-      roomType: 'user',
       meta: {
         id: member.id,
         username: member.username,
@@ -281,23 +281,31 @@ export default function GroupInfo() {
       </div>
 
       <div className='mt-6 pt-4 border-t border-(--border) flex flex-col gap-3'>
-        {isCreator && (
-          <button
-            onClick={handleClear}
-            disabled={clearMutation.isPending}
-            className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-orange-300 text-orange-500 font-semibold transition hover:bg-orange-50 cursor-pointer disabled:opacity-50'
-          >
-            <Eraser size={18} />
-            {clearMutation.isPending ? 'Clearing...' : 'Clear Chat'}
-          </button>
-        )}
-        <button
-          onClick={handleDelete}
-          className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-red-300 text-red-500 font-semibold transition hover:bg-red-50 cursor-pointer'
-        >
-          <Trash2 size={18} />
-          Delete Chat
-        </button>
+        <div className='flex gap-3'>
+          {isCreator && (
+            <div className='flex flex-col flex-1 text-orange-500 gap-2'>
+              <p>Clear Chat</p>
+              <button
+                onClick={handleClear}
+                disabled={clearMutation.isPending}
+                className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-orange-300 font-semibold transition hover:bg-orange-50 cursor-pointer disabled:opacity-50'
+              >
+                <Eraser size={18} />
+                {clearMutation.isPending ? 'Clearing...' : 'Clear Chat'}
+              </button>
+            </div>
+          )}
+          <div className='flex flex-col flex-1 text-red-500 gap-2'>
+            <p>Delete Chat</p>
+            <button
+              onClick={handleDelete}
+              className='w-full flex items-center justify-center gap-2 py-3 rounded-[14px] border border-red-300 font-semibold transition hover:bg-red-50 cursor-pointer'
+            >
+              <Trash2 size={18} />
+              Delete Chat
+            </button>
+          </div>
+        </div>
       </div>
 
       {showAddMember && (
