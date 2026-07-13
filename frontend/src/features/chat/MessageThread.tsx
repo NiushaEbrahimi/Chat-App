@@ -12,6 +12,7 @@ import type { Message } from '../../types/chatTypes';
 import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
 import { openGroupInfo, openUserInfo } from '../../store/slices/uiSlice';
+import Spinner from '../../shared/Spinner';
 
 interface Props {
   roomId: string;
@@ -45,7 +46,7 @@ const MessageThread = ({ roomId }: Props) => {
   const currentUser = useSelector((s: RootState) => s.auth.user);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery<
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery<
     { data: { results: Message[]; next: string | null } },
     Error,
     { data: { results: Message[]; next: string | null } },
@@ -89,7 +90,16 @@ const MessageThread = ({ roomId }: Props) => {
     return () => observer.disconnect();
   }, [messages, sendMessage]);
 
-  const isTyping = useSelector((s: RootState) => s.chat.typingUsers[roomId] ?? []);
+  const isTyping = useSelector((s: RootState) => (s.chat.typingUsers[roomId] ?? []).filter(u => u.userId !== currentUser?.id));
+
+  if (isLoading) {
+    return (
+      <div className='flex h-full items-center justify-center rounded-[28px] border border-(--border) bg-(--secondary-faded)'>
+        <Spinner />
+      </div>
+    );
+  }
+
   return (
     <div className='flex h-full flex-col rounded-[28px] border border-(--border) bg-(--secondary-faded) shadow-inner shadow-[rgba(106,17,203,0.08)]'>
 

@@ -25,6 +25,21 @@ const getInitialAuthState = (): AuthState => {
 
 const initialState: AuthState = getInitialAuthState();
 
+let storeRef: { dispatch: (action: any) => void } | null = null;
+
+export const setStoreRef = (store: { dispatch: (action: any) => void }) => {
+  storeRef = store;
+};
+
+// Listen for localStorage changes (e.g., user clears localStorage)
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'access_token' && !event.newValue && storeRef) {
+      storeRef.dispatch(logout());
+    }
+  });
+}
+
 const authSlice = createSlice({
   name: "auth",
   initialState,

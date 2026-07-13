@@ -12,6 +12,7 @@ import ProfileEdit from './ProfileEdit';
 import Settings from './Settings';
 import GroupInfo from './GroupInfo';
 import UserInfo from './UserInfo';
+import Spinner from '../../shared/Spinner';
 
 const ChatPage = () => {
   const dispatch = useDispatch();
@@ -25,7 +26,7 @@ const ChatPage = () => {
   // hook lives here so it's always connected while on chat page
   useWebSocket();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: fetchRooms,
   });
@@ -35,6 +36,14 @@ const ChatPage = () => {
       dispatch(setRooms(data.data));
     }
   }, [data, dispatch]);
+
+  if (isLoading) {
+    return (
+      <div className='flex h-screen items-center justify-center bg-(--primary-faded)'>
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className='flex h-screen overflow-hidden px-10 py-6 gap-6 bg-(--primary-faded)'>

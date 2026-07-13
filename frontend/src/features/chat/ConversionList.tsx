@@ -239,11 +239,11 @@ const ConversationList = () => {
                     )}
                   </div>
                   {
-                    isTyping[room.id] && isTyping[room.id].length > 0 ? (
+                    isTyping[room.id] && isTyping[room.id].filter(u => u.userId !== currentUserId).length > 0 ? (
                       <p className='truncate text-xs font-semibold text-slate-900'>
-                        {room.is_group ? `${isTyping[room.id].map(user => user.username).join(', ')} is` : ''}  typing...
+                        {room.is_group ? `${isTyping[room.id].filter(u => u.userId !== currentUserId).map(user => user.username).join(', ')} is` : ''}  typing...
                       </p>
-                    ) : 
+                    ) :
                     <p className={`truncate text-xs ${isUnread ? 'font-semibold text-slate-900' : 'text-slate-500'}`}>
                       {previewText}
                     </p>
