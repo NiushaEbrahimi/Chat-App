@@ -317,7 +317,7 @@ function AddNewConverstaion(){
   },
 });
 
-  const { mutate: startChat, isPending } = useMutation({
+  const { isPending } = useMutation({
   mutationFn: ({userId , username } : {userId:string, username:string}) =>
     createRoom({ name: username, is_group: false, member_ids: [userId] }),
 

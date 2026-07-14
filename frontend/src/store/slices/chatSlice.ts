@@ -103,15 +103,15 @@ const chatSlice = createSlice({
       const exists = state.messages[room].some(m => m.id === message.id);
       if (!exists) {
         state.messages[room].push(message);
-      }
 
-      const roomIndex = state.rooms.findIndex(r => r.id === room);
-      if (roomIndex !== -1) {
-        const targetRoom = state.rooms[roomIndex];
-        targetRoom.last_message = message;
+        const roomIndex = state.rooms.findIndex(r => r.id === room);
+        if (roomIndex !== -1) {
+          const targetRoom = state.rooms[roomIndex];
+          targetRoom.last_message = message;
 
-        if (isIncoming && state.activeRoom.roomId !== room) {
-          targetRoom.unreadCount = (targetRoom.unreadCount ?? 0) + 1;
+          if (isIncoming && state.activeRoom.roomId !== room) {
+            targetRoom.unreadCount = (targetRoom.unreadCount ?? 0) + 1;
+          }
         }
       }
 

@@ -71,19 +71,11 @@ class RoomDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         room = self.get_object()
-        # Only the room creator can delete, or if it's a DM, any member can delete for themselves
         if room.is_group and room.created_by != request.user:
             return Response(
                 {'detail': 'Only the group creator can delete this group.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        # For DMs, remove the user from the room instead of deleting
-        if not room.is_group:
-            room.members.remove(request.user)
-            if room.members.count() == 0:
-                room.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        # For groups, delete the entire room
         room.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
