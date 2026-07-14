@@ -7,7 +7,6 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 import { useThemeInitializer } from '../../hooks/useThemeInitializer';
 import ConversationList from './ConversionList';
 import MessageThread from './MessageThread';
-import PendingChat from './PendingChat';
 import type { RootState } from '../../store';
 import ProfileEdit from './ProfileEdit';
 import Settings from './Settings';
@@ -70,11 +69,8 @@ const ChatPage = () => {
             <UserInfo/>
           </div>
         ) :
-        pendingChat ? (
-          <PendingChat />
-        ) :
-        activeRoom.roomId ? (
-          <MessageThread roomId={activeRoom.roomId} />
+        (pendingChat || activeRoom.roomId) ? (
+          <MessageThread roomId={activeRoom.roomId ?? undefined} />
         ) : (
           <div className='flex h-full items-center justify-center text-slate-500'>
             Select a conversation

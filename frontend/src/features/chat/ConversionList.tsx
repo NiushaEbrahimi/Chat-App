@@ -346,6 +346,7 @@ function AddNewConverstaion(){
       dispatch(closePanel());
       dispatch(setActiveRoom({ roomId: existingRoom.id, roomType: 'user', meta: other ?? existingRoom }));
     } else {
+      dispatch(setActiveRoom({ roomId: null, roomType: 'user', meta: null }));
       dispatch(setPendingChat({
         userId,
         username,

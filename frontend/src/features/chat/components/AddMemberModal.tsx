@@ -14,6 +14,7 @@ interface AddMemberModalProps {
   roomId: string;
   currentMemberIds: string[];
   onClose: () => void;
+  setMembers: React.SetStateAction<[]>;
 }
 
 export default function AddMemberModal({ roomId, currentMemberIds, onClose }: AddMemberModalProps) {
@@ -46,6 +47,7 @@ export default function AddMemberModal({ roomId, currentMemberIds, onClose }: Ad
           meta: { ...activeRoom.meta, members: newMembers },
         }));
       }
+      // setMembers(prev => [...prev, ...selectedUsers]);
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
       onClose();
     },

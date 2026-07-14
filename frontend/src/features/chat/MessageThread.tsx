@@ -15,7 +15,7 @@ import { openGroupInfo, openUserInfo, setUserPanel } from '../../store/slices/ui
 import Spinner from '../../shared/Spinner';
 
 interface Props {
-  roomId: string;
+  roomId?: string;
 }
 
 const formatMessageTimestamp = (value: string) => {
@@ -41,28 +41,32 @@ const MessageThread = ({ roomId }: Props) => {
   const dispatch = useDispatch();
   const { sendMessage } = useWebSocket();
   const { className: textSizeClass } = useTextSize();
-  const messages = useSelector((s: RootState) => s.chat.messages[roomId] ?? []) as Message[];
+  const pendingChat = useSelector((s: RootState) => s.chat.pendingChat);
+  const messages = useSelector((s: RootState) => roomId ? (s.chat.messages[roomId] ?? []) : []) as Message[];
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
   const currentUser = useSelector((s: RootState) => s.auth.user);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const isPending = !roomId && !!pendingChat;
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery<
     { data: { results: Message[]; next: string | null } },
     Error,
     { data: { results: Message[]; next: string | null } },
-    [string, string]
+    [string, string | undefined]
   >({
     queryKey: ['messages', roomId],
-    queryFn: (context: QueryFunctionContext) => fetchMessages(roomId, context.pageParam as string | undefined),
+    queryFn: (context: QueryFunctionContext) => fetchMessages(roomId!, context.pageParam as string | undefined),
     getNextPageParam: (lastPage) => lastPage.data.next ?? undefined,
     initialPageParam: undefined,
+    enabled: !!roomId,
   });
 
   const typedData = data as InfiniteData<{ data: { results: Message[]; next: string | null } }> | undefined;
 
   // flatten all pages into Redux
   useEffect(() => {
-    if (typedData) {
+    if (typedData && roomId) {
       const allMessages = typedData.pages.flatMap(p => p.data.results).reverse();
       dispatch(setMessages({ roomId, messages: allMessages }));
     }
@@ -75,6 +79,8 @@ const MessageThread = ({ roomId }: Props) => {
 
   // mark messages as read using IntersectionObserver
   useEffect(() => {
+    if (isPending) return;
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -88,9 +94,9 @@ const MessageThread = ({ roomId }: Props) => {
 
     document.querySelectorAll('[data-message-id]').forEach(el => observer.observe(el));
     return () => observer.disconnect();
-  }, [messages, sendMessage]);
+  }, [messages, sendMessage, isPending]);
 
-  const isTyping = useSelector((s: RootState) => (s.chat.typingUsers[roomId] ?? []).filter(u => u.userId !== currentUser?.id));
+  const isTyping = useSelector((s: RootState) => roomId ? (s.chat.typingUsers[roomId] ?? []).filter(u => u.userId !== currentUser?.id) : []);
 
   if (isLoading) {
     return (
@@ -100,123 +106,129 @@ const MessageThread = ({ roomId }: Props) => {
     );
   }
 
+  const headerName = isPending
+    ? pendingChat!.username
+    : activeRoom.meta?.name === "Saved Messages"
+      ? "Saved Messages"
+      : activeRoom.meta?.username ?? activeRoom.meta?.name;
+
+  const headerAvatar = isPending ? pendingChat!.avatar : activeRoom.meta?.avatar;
+  const headerOnline = isPending ? pendingChat!.is_online : activeRoom.meta?.is_online;
+
+  const handleHeaderClick = () => {
+    if (isPending) return;
+    if (activeRoom.roomType === "group") dispatch(openGroupInfo());
+    if (activeRoom.roomType === "user") {
+      dispatch(setUserPanel({
+        roomId: activeRoom.roomId,
+        meta: {
+          id: activeRoom.meta?.id ?? '',
+          username: activeRoom.meta?.username ?? '',
+          avatar: activeRoom.meta?.avatar ?? null,
+          is_online: activeRoom.meta?.is_online ?? false,
+        },
+      }));
+      dispatch(openUserInfo());
+    }
+  };
+
   return (
     <div className='flex h-full flex-col rounded-[28px] border border-(--border) bg-(--secondary-faded) shadow-inner shadow-[rgba(106,17,203,0.08)]'>
 
           <div className={`sticky h-0 top-12 z-10 rounded-[28px] flex justify-center items-center px-10`}>
             <div
               className='flex-1 flex justify-center'
-              onClick={()=>{
-                if(activeRoom.roomType==="group") dispatch(openGroupInfo())
-                if(activeRoom.roomType==="user") {
-                  dispatch(setUserPanel({
-                    roomId: activeRoom.roomId,
-                    meta: {
-                      id: activeRoom.meta?.id ?? '',
-                      username: activeRoom.meta?.username ?? '',
-                      avatar: activeRoom.meta?.avatar ?? null,
-                      is_online: activeRoom.meta?.is_online ?? false,
-                    },
-                  }));
-                  dispatch(openUserInfo());
-                }
-              }}
+              onClick={handleHeaderClick}
             >
               <GlassCard blur={10} minWidth={'40%'} padding={12} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex flex-col items-center text-center'>
-                  <p className='text-black font-semibold'>{activeRoom.meta?.name==="Saved Messages" ? "Saved Messages" : activeRoom.meta?.username ? activeRoom.meta?.username : activeRoom.meta?.name}</p>
-                  { isTyping.length > 0 
+                  <p className='text-black font-semibold'>{headerName}</p>
+                  {isTyping.length > 0
                     ?<p className='text-gray-500 text-sm'>{activeRoom.roomType==="group" ? `${isTyping.map(user => user.username).join(', ')} is` : ''} typing...</p>
-                    :<p className='text-gray-500 text-sm'>{activeRoom.meta?.is_online ? 'online' : 'offline'}</p>}
+                    :<p className='text-gray-500 text-sm'>{headerOnline ? 'online' : 'offline'}</p>}
                 </div>
               </GlassCard>
             </div>
             <div
-              onClick={()=>{
-                if(activeRoom.roomType==="group") dispatch(openGroupInfo())
-                if(activeRoom.roomType==="user") {
-                  dispatch(setUserPanel({
-                    roomId: activeRoom.roomId,
-                    meta: {
-                      id: activeRoom.meta?.id ?? '',
-                      username: activeRoom.meta?.username ?? '',
-                      avatar: activeRoom.meta?.avatar ?? null,
-                      is_online: activeRoom.meta?.is_online ?? false,
-                    },
-                  }));
-                  dispatch(openUserInfo());
-                }
-              }}
+              onClick={handleHeaderClick}
             >
               <GlassCard blur={10} minWidth={64} minHeight={64} padding={5} className='text-black shadow-[rgba(106,17,203,0.3)]'>
                 <div className='flex items-center justify-center'>
-                  <UserAvatar avatar={activeRoom.meta?.avatar} inputSize={64} username={activeRoom.meta?.username ? activeRoom.meta?.username : activeRoom.meta?.name}/>
+                  <UserAvatar avatar={headerAvatar} inputSize={64} username={headerName ?? ''}/>
                 </div>
               </GlassCard>
             </div>
           </div>
 
-      {hasNextPage && (
-        <div className='mx-auto my-4'>
-          <button
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            className='rounded-full border border-(--border) bg-white/90 px-4 py-2 text-xs text-(--primary) transition hover:bg-(--primary-faded) disabled:cursor-not-allowed disabled:opacity-60'
-          >
-            {isFetchingNextPage ? 'Loading...' : 'Load older messages'}
-          </button>
+      {isPending ? (
+        <div className='flex-1 flex items-center justify-center text-slate-500'>
+          <p className='text-sm'>Send a message to start the conversation</p>
         </div>
-      )}
-
-      <div className='flex-1 overflow-y-auto px-6 flex flex-col gap-4 pt-25 pb-6'>
-        {messages.map((message, index) => {
-          const isCurrentUser = currentUser?.id === message.sender.id;
-          const previousMessage = messages[index - 1];
-          const showDayLabel = index === 0 || formatDayLabel(message.created_at) !== formatDayLabel(previousMessage?.created_at ?? '');
-          const usersRead = message.reads
-            .filter(r => r.user.id !== currentUser?.id)
-            .map(r => r.user.username);
-
-          return (
-            <div key={message.id}>
-              {showDayLabel && (
-                <div className='my-2 flex justify-center'>
-                  <span className='rounded-full bg-white/70 px-3 py-1 text-[11px] font-medium text-slate-500'>
-                    {formatDayLabel(message.created_at)}
-                  </span>
-                </div>
-              )}
-              <div
-                data-message-id={message.id}
-                className={`flex gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+      ) : (
+        <>
+          {hasNextPage && (
+            <div className='mx-auto my-4'>
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className='rounded-full border border-(--border) bg-white/90 px-4 py-2 text-xs text-(--primary) transition hover:bg-(--primary-faded) disabled:cursor-not-allowed disabled:opacity-60'
               >
-                {activeRoom?.roomType === 'group' && !isCurrentUser && (
-                    <UserAvatar avatar={message.sender.avatar} inputSize={42} username={message.sender.username}  />
+                {isFetchingNextPage ? 'Loading...' : 'Load older messages'}
+              </button>
+            </div>
+          )}
+
+          <div className='flex-1 overflow-y-auto px-6 flex flex-col gap-4 pt-25 pb-6'>
+            {messages.map((message, index) => {
+              const isCurrentUser = currentUser?.id === message.sender.id;
+              const previousMessage = messages[index - 1];
+              const showDayLabel = index === 0 || formatDayLabel(message.created_at) !== formatDayLabel(previousMessage?.created_at ?? '');
+              const usersRead = message.reads
+                .filter(r => r.user.id !== currentUser?.id)
+                .map(r => r.user.username);
+
+              return (
+                <div key={message.id}>
+                  {showDayLabel && (
+                    <div className='my-2 flex justify-center'>
+                      <span className='rounded-full bg-white/70 px-3 py-1 text-[11px] font-medium text-slate-500'>
+                        {formatDayLabel(message.created_at)}
+                      </span>
+                    </div>
                   )}
-                <div className={`flex flex-col min-w-[10%] max-w-[70%]`}>
-                  <div className={`rounded-xl border border-(--border) px-2 ${(activeRoom?.roomType === 'group' && !isCurrentUser) ? "pt-5" : "pt-2"} pb-4 ${textSizeClass} shadow-sm ${isCurrentUser ? 'bg-(--primary) text-white' : 'bg-white/90 text-slate-900'} relative`}>
+                  <div
+                    data-message-id={message.id}
+                    className={`flex gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                  >
                     {activeRoom?.roomType === 'group' && !isCurrentUser && (
-                      <div className='absolute left-2 top-1 text-[13px] text-(--primary)'>
-                        {message.sender.username}
+                        <UserAvatar avatar={message.sender.avatar} inputSize={42} username={message.sender.username}  />
+                      )}
+                    <div className={`flex flex-col min-w-[10%] max-w-[70%]`}>
+                      <div className={`rounded-xl border border-(--border) px-2 ${(activeRoom?.roomType === 'group' && !isCurrentUser) ? "pt-5" : "pt-2"} pb-4 ${textSizeClass} shadow-sm ${isCurrentUser ? 'bg-(--primary) text-white' : 'bg-white/90 text-slate-900'} relative`}>
+                        {activeRoom?.roomType === 'group' && !isCurrentUser && (
+                          <div className='absolute left-2 top-1 text-[13px] text-(--primary)'>
+                            {message.sender.username}
+                          </div>
+                        )}
+                        {message.content}
+                        <div className={`absolute right-2 bottom-0 text-[10px] ${isCurrentUser ? 'text-white/70' : 'text-slate-400'}`}>
+                          {formatMessageTimestamp(message.created_at)}
+                        </div>
                       </div>
-                    )}
-                    {message.content}
-                    <div className={`absolute right-2 bottom-0 text-[10px] ${isCurrentUser ? 'text-white/70' : 'text-slate-400'}`}>
-                      {formatMessageTimestamp(message.created_at)}
+                      {isCurrentUser && usersRead.length > 0 && (
+                        <div className='text-[10px] text-(--primary)/80'>
+                          Read by {usersRead.join(', ')}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {isCurrentUser && usersRead.length > 0 && (
-                    <div className='text-[10px] text-(--primary)/80'>
-                      Read by {usersRead.join(', ')}
-                    </div>
-                  )}
                 </div>
-              </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
+              );
+            })}
+            <div ref={bottomRef} />
+          </div>
+        </>
+      )}
 
       <MessageInput roomId={roomId} />
     </div>

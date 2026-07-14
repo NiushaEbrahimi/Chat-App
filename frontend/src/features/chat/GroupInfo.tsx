@@ -26,8 +26,8 @@ export default function GroupInfo() {
   const [successMessage, setSuccessMessage] = useState('');
   const [showAddMember, setShowAddMember] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [members, setMembers] = useState(activeRoom.meta?.members ?? []);
 
-  const members = activeRoom.meta?.members ?? [];
   const groupAvatar = resolveAvatarUrl(avatarPreview ?? activeRoom.meta?.avatar_url ?? undefined);
   const originalName = activeRoom.meta?.name ?? 'Unnamed Group';
 
@@ -76,8 +76,12 @@ export default function GroupInfo() {
       newMemberIds.forEach(id => formData.append('member_ids', id));
       await updateRoom(activeRoom.roomId!, formData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+     onSuccess: (_, memberId) => {
+      setMembers(prev => prev.filter(m => m.id !== memberId));
+
+      queryClient.invalidateQueries({
+        queryKey: ['rooms'],
+      });
     },
     onError: (error: ApiError) => {
       console.error('Remove member failed:', error);

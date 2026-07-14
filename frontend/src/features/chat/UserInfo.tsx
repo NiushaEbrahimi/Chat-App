@@ -83,6 +83,7 @@ export default function UserInfo() {
         meta: dmRoom,
       }));
     } else if (userId) {
+      dispatch(setActiveRoom({ roomId: null, roomType: 'user', meta: null }));
       dispatch(setPendingChat({
         userId,
         username,
