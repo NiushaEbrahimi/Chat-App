@@ -52,20 +52,19 @@ const MessageInput = ({ roomId }: Props) => {
         const newRoom = response.data;
         const other = newRoom.members.find((m: ChatUser) => m.id !== currentUserId);
 
+        sendMessage({
+          type: 'send_message',
+          room_id: newRoom.id,
+          content,
+        });
+
         dispatch(setActiveRoom({
           roomId: newRoom.id,
           roomType: 'user',
           meta: other ?? newRoom,
         }));
         dispatch(setPendingChat(null));
-
-        await queryClient.invalidateQueries({ queryKey: ['rooms'] });
-
-        sendMessage({
-          type: 'send_message',
-          room_id: newRoom.id,
-          content,
-        });
+        queryClient.invalidateQueries({ queryKey: ['rooms'] });
       } else if (roomId) {
         sendMessage({
           type: 'send_message',

@@ -279,7 +279,8 @@ function AddNewConverstaion(){
   const [makingGroup, setMakingGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-
+  
+  const rooms = useSelector((s: RootState) => s.chat.rooms);
   const { data, isLoading } = useUserSearch(query)
   const onlineUserIds = useSelector((s: RootState) => s.chat.onlineUserIds);
   const currentUserId = useSelector((s: RootState) => s.auth.user?.id);

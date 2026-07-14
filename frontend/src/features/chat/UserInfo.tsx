@@ -9,7 +9,7 @@ import { deleteRoom, clearMessages } from '../../api/chat';
 import { setActiveRoom, setMessages, setPendingChat } from '../../store/slices/chatSlice';
 import { useAuth } from '../../hooks/useAuth';
 import type { ApiError } from '../../types/errorTypes';
-import type { Room } from '../../types/chatTypes';
+import type { Room, ChatUser } from '../../types/chatTypes';
 
 export default function UserInfo() {
   const dispatch = useDispatch();
@@ -77,10 +77,11 @@ export default function UserInfo() {
     );
 
     if (dmRoom) {
+      const other = dmRoom.members.find((m: ChatUser) => m.id !== currentUserId);
       dispatch(setActiveRoom({
         roomId: dmRoom.id,
         roomType: 'user',
-        meta: dmRoom,
+        meta: other ?? dmRoom,
       }));
     } else if (userId) {
       dispatch(setActiveRoom({ roomId: null, roomType: 'user', meta: null }));
