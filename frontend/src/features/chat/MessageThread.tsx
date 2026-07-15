@@ -13,7 +13,7 @@ import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
 import { openGroupInfo, openUserInfo, setUserPanel } from '../../store/slices/uiSlice';
 import Spinner from '../../shared/Spinner';
-import { LucideCircle, LucideCircleArrowDown, LucideCircleArrowUp } from 'lucide-react';
+import { LucideCircleArrowDown, LucideCircleArrowUp } from 'lucide-react';
 
 interface Props {
   roomId?: string;
@@ -51,6 +51,7 @@ const MessageThread = ({ roomId }: Props) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [isNearTop, setIsNearTop] = useState(false);
+  const isProgrammaticScrollRef = useRef(false);
 
   // scroll to bottom instantly when entering a new room
   const hasScrolledForRoomRef = useRef<string | undefined>(undefined);
@@ -69,8 +70,13 @@ const MessageThread = ({ roomId }: Props) => {
     const el = scrollContainerRef.current;
     if (!el) return;
     const threshold = 100;
-    setIsNearBottom(el.scrollHeight - el.scrollTop - el.clientHeight < threshold);
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
     setIsNearTop(el.scrollTop < threshold);
+    if (isProgrammaticScrollRef.current) {
+      if (nearBottom) isProgrammaticScrollRef.current = false;
+      return;
+    }
+    setIsNearBottom(nearBottom);
   };
 
   const scrollToBottom = () => {
@@ -107,10 +113,10 @@ const MessageThread = ({ roomId }: Props) => {
 
   const typedData = data as InfiniteData<{ data: { results: Message[]; next: string | null } }> | undefined;
 
-  // flatten all pages into Redux — reverse each page individually so order is correct
+  // flatten all pages into Redux — pages[0] is newest (first fetch), so reverse page order
   useEffect(() => {
     if (typedData && roomId) {
-      const allMessages = typedData.pages.flatMap(p => [...p.data.results].reverse());
+      const allMessages = [...typedData.pages].reverse().flatMap(p => [...p.data.results].reverse());
       dispatch(setMessages({ roomId, messages: allMessages }));
     }
   }, [typedData, roomId, dispatch]);
@@ -278,7 +284,7 @@ const MessageThread = ({ roomId }: Props) => {
               </div>
             );
           })}
-          <div ref={bottomRef} />
+          <div ref={bottomRef} className='h-1'/>
         </div>
         {!isNearBottom && (
           <button
@@ -290,8 +296,11 @@ const MessageThread = ({ roomId }: Props) => {
         )}
       </>
       )}
-
-      <MessageInput roomId={roomId} />
+      
+      <MessageInput roomId={roomId} bottomRef={bottomRef} onSendScroll={() => {
+        setIsNearBottom(true);
+        isProgrammaticScrollRef.current = true;        
+      }}/>
     </div>
   );
 };

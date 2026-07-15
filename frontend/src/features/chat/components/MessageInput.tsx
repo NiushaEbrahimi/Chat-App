@@ -6,12 +6,15 @@ import type { RootState } from '../../../store';
 import { createRoom } from '../../../api/chat';
 import { setActiveRoom, setPendingChat } from '../../../store/slices/chatSlice';
 import type { ChatUser } from '../../../types/chatTypes';
+import React from 'react';
 
 interface Props {
   roomId?: string;
+  bottomRef : React.RefObject<HTMLDivElement>
+  onSendScroll : () => void
 }
 
-const MessageInput = ({ roomId }: Props) => {
+const MessageInput = ({ roomId, bottomRef, onSendScroll }: Props) => {
   const [value, setValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { sendMessage } = useWebSocket();
@@ -88,7 +91,12 @@ const MessageInput = ({ roomId }: Props) => {
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {
+      // TODO: has problem
+      onSendScroll();
       setIsSending(false);
+      requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      });
     }
   };
 
