@@ -37,4 +37,5 @@ export interface Room {
   created_at: string;
   is_saved_messages: boolean,
   avatar_url: string,
+  unreadCount?: number,
 }

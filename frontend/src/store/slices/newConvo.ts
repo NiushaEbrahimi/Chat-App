@@ -17,7 +17,7 @@ const newConvoSlice = createSlice({
     },
     offNewConvo : (state)=>{
         state.isNewConvo = false
-    }, 
+    },
   },
 });
 

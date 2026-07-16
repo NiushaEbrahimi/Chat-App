@@ -1,7 +1,7 @@
-// src/features/chat/TypingIndicator.tsx
+// not used for now ( don't know if i like the istyping in header or down in MessageThread)
 import { useSelector } from 'react-redux';
-import type { RootState } from '../../store';
-import { useAuth } from '../../hooks/useAuth';
+import type { RootState } from '../../../store';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface Props {
   roomId: string;
@@ -20,7 +20,7 @@ const TypingIndicator = ({ roomId }: Props) => {
     : `${typingUsers.map(u => u.username).join(', ')} are typing...`;
 
   return (
-    <div className='mx-6 mb-2 rounded-full bg-white/80 px-4 py-2 text-xs text-[color:var(--primary)] shadow-sm'>
+    <div className='mx-6 mb-2 rounded-full bg-white/80 px-4 py-2 text-xs text-(--primary) shadow-sm'>
       {text}
     </div>
   );

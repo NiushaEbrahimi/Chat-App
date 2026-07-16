@@ -15,3 +15,12 @@ export const fetchMessages = (roomId: string, pageParam?: string): Promise<{ dat
 
 export const fetchSavedMessage = (): Promise<{ data: Room }> =>
   apiClient.get('/api/chat/rooms/saved/');
+
+export const updateRoom = (roomId: string, data: FormData) =>
+  apiClient.patch(`/api/chat/rooms/${roomId}/`, data);
+
+export const deleteRoom = (roomId: string) =>
+  apiClient.delete(`/api/chat/rooms/${roomId}/`);
+
+export const clearMessages = (roomId: string) =>
+  apiClient.delete(`/api/chat/rooms/${roomId}/clear/`);
