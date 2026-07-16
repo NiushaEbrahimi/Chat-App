@@ -10,7 +10,7 @@ import React from 'react';
 
 interface Props {
   roomId?: string;
-  bottomRef : React.RefObject<HTMLDivElement>
+  bottomRef : React.RefObject<HTMLDivElement | null>
   onSendScroll : () => void
 }
 
@@ -91,12 +91,10 @@ const MessageInput = ({ roomId, bottomRef, onSendScroll }: Props) => {
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {
-      // TODO: has problem
       onSendScroll();
       setIsSending(false);
-      requestAnimationFrame(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      });
+      // scrollIntoView removed from here — MessageThread handles it once
+      // the message actually shows up in `messages`
     }
   };
 

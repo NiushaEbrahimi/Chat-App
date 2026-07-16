@@ -13,7 +13,7 @@ import type { RootState } from '../../store';
 import UserAvatar from '../../shared/UserAvatar';
 import { openGroupInfo, openUserInfo, setUserPanel } from '../../store/slices/uiSlice';
 import Spinner from '../../shared/Spinner';
-import { LucideCircleArrowDown, LucideCircleArrowUp } from 'lucide-react';
+import { LucideCircleArrowDown } from 'lucide-react';
 
 interface Props {
   roomId?: string;
@@ -52,18 +52,37 @@ const MessageThread = ({ roomId }: Props) => {
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [isNearTop, setIsNearTop] = useState(false);
   const isProgrammaticScrollRef = useRef(false);
+  const shouldScrollOnNextMessageRef = useRef(false);
+  const prevScrollHeightRef = useRef<number>(0);
 
-  // scroll to bottom instantly when entering a new room
+  // scroll to bottom once the pending outgoing message actually lands in `messages`
+  useEffect(() => {
+    if (!shouldScrollOnNextMessageRef.current) return;
+    shouldScrollOnNextMessageRef.current = false;
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    });
+  }, [messages]);
+
+  const [firstUnreadIndex, setFirstUnreadIndex] = useState(-1);
+
+  // on room enter: snapshot first-unread index and scroll to it (or bottom if all read)
   const hasScrolledForRoomRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!roomId || !messages.length) return;
     if (hasScrolledForRoomRef.current === roomId) return;
     hasScrolledForRoomRef.current = roomId;
-    // wait a tick for DOM to settle, then jump to bottom
+    const idx = messages.findIndex(m => !m.reads.some(r => r.user.id === currentUser?.id));
+    setFirstUnreadIndex(idx);
     requestAnimationFrame(() => {
-      bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+      if (idx >= 0) {
+        const el = document.querySelector(`[data-message-id="${messages[idx].id}"]`);
+        el?.scrollIntoView({ behavior: 'instant', block: 'center' });
+      } else {
+        bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+      }
     });
-  }, [roomId, messages]);
+  }, [roomId, messages, currentUser?.id]);
 
   // track scroll position to show/hide jump-to-bottom button
   const handleScroll = () => {
@@ -71,12 +90,18 @@ const MessageThread = ({ roomId }: Props) => {
     if (!el) return;
     const threshold = 100;
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-    setIsNearTop(el.scrollTop < threshold);
+    const nearTop = el.scrollTop < threshold;
+    setIsNearTop(nearTop);
     if (isProgrammaticScrollRef.current) {
       if (nearBottom) isProgrammaticScrollRef.current = false;
       return;
     }
     setIsNearBottom(nearBottom);
+
+    if (nearTop && hasNextPage && !isFetchingNextPage) {
+      prevScrollHeightRef.current = el.scrollHeight;
+      fetchNextPage();
+    }
   };
 
   const scrollToBottom = () => {
@@ -84,19 +109,6 @@ const MessageThread = ({ roomId }: Props) => {
   };
 
   const isPending = !roomId && !!pendingChat;
-
-  // snapshot the first unread index when the room opens — stays stable even after messages are marked read
-  const [firstUnreadIndex, setFirstUnreadIndex] = useState(-1);
-  const snapshottedRoomIdRef = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (!roomId || !messages.length) return;
-    // only snapshot once per room
-    if (snapshottedRoomIdRef.current === roomId) return;
-    snapshottedRoomIdRef.current = roomId;
-    const idx = messages.findIndex(m => !m.reads.some(r => r.user.id === currentUser?.id));
-     setFirstUnreadIndex(idx);
-  }, [roomId, messages, currentUser?.id]);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery<
     { data: { results: Message[]; next: string | null } },
@@ -112,6 +124,13 @@ const MessageThread = ({ roomId }: Props) => {
   });
 
   const typedData = data as InfiniteData<{ data: { results: Message[]; next: string | null } }> | undefined;
+  
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || !prevScrollHeightRef.current) return;
+    el.scrollTop = el.scrollHeight - prevScrollHeightRef.current;
+    prevScrollHeightRef.current = 0;
+  }, [typedData?.pages.length]);
 
   // flatten all pages into Redux — pages[0] is newest (first fetch), so reverse page order
   useEffect(() => {
@@ -212,25 +231,17 @@ const MessageThread = ({ roomId }: Props) => {
       </div>
       ) : (
       <>
-        {isNearTop && hasNextPage && (
-          <div className='mx-auto my-4 absolute top-20 left-6 z-100'>
-            <button
-              onClick={() =>fetchNextPage()}
-              // disabled={isFetchingNextPage}
-              className='flex items-center gap-1 rounded-full border border-(--border) bg-(--primary) p-2 text-xs text-white transition hover:bg-(--primary-faded) disabled:cursor-not-allowed disabled:opacity-60'
-            >
-              <LucideCircleArrowUp/>
-              {isFetchingNextPage ? 'Loading...' : 'Load messages'}
-            </button>
-          </div>
-        )}
-
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           className='flex-1 overflow-y-auto px-6 flex flex-col gap-4 pt-25 pb-6 relative'
         >
           <div ref={topRef} />
+          {isNearTop && isFetchingNextPage && (
+            <div className='flex justify-center py-2'>
+              <Spinner />
+            </div>
+          )}
           {messages.map((message, index) => {
             const isCurrentUser = currentUser?.id === message.sender.id;
             const previousMessage = messages[index - 1];
@@ -297,10 +308,15 @@ const MessageThread = ({ roomId }: Props) => {
       </>
       )}
       
-      <MessageInput roomId={roomId} bottomRef={bottomRef} onSendScroll={() => {
-        setIsNearBottom(true);
-        isProgrammaticScrollRef.current = true;        
-      }}/>
+      <MessageInput
+        roomId={roomId}
+        bottomRef={bottomRef}
+        onSendScroll={() => {
+          setIsNearBottom(true);
+          isProgrammaticScrollRef.current = true;
+          shouldScrollOnNextMessageRef.current = true;
+        }}
+      />
     </div>
   );
 };
