@@ -21,7 +21,7 @@ class RoomListCreateView(generics.ListCreateAPIView):
         return Room.objects.filter(
             members=self.request.user
         ).prefetch_related('members', 'messages').order_by('-created_at')
-    
+
     def create(self, request, *args, **kwargs):
         print("REQUEST DATA:", request.data)
 
@@ -57,6 +57,29 @@ class RoomListCreateView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
 
 
+class RoomDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    — retrieve room details
+    PATCH  — update room (name, avatar)
+    DELETE — delete room (only creator or group creator can delete)
+    """
+    serializer_class = RoomSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return Room.objects.filter(members=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        room = self.get_object()
+        if room.is_group and room.created_by != request.user:
+            return Response(
+                {'detail': 'Only the group creator can delete this group.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        room.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class MessageListView(generics.ListAPIView):
     """
     GET — fetch message history for a room (paginated, newest first)
@@ -79,6 +102,34 @@ class MessageListView(generics.ListAPIView):
         return room.messages.select_related('sender').prefetch_related(
             'reads', 'reactions'
         ).order_by('-created_at')  # newest first for infinite scroll
+
+
+class ClearMessagesView(APIView):
+    """
+    DELETE — clear all messages in a room (only room creator can do this)
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def delete(self, request, room_id):
+        try:
+            room = Room.objects.get(id=room_id, members=request.user)
+        except Room.DoesNotExist:
+            return Response(
+                {'detail': 'Room not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Only creator can clear messages
+        if room.created_by != request.user:
+            return Response(
+                {'detail': 'Only the room creator can clear messages.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Delete all messages in the room
+        room.messages.all().delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
     
 
 @api_view(['GET'])

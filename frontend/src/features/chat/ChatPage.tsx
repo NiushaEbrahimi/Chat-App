@@ -1,4 +1,3 @@
-// src/features/chat/ChatPage.tsx
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
@@ -11,20 +10,20 @@ import MessageThread from './MessageThread';
 import type { RootState } from '../../store';
 import ProfileEdit from './ProfileEdit';
 import Settings from './Settings';
+import GroupInfo from './GroupInfo';
+import UserInfo from './UserInfo';
+import Spinner from '../../shared/Spinner';
 
 const ChatPage = () => {
   const dispatch = useDispatch();
   const activeRoom = useSelector((s: RootState) => s.chat.activeRoom);
-  const activePanel = useSelector((s: RootState) => s.ui.openPanel );
+  const activePanel = useSelector((s: RootState) => s.ui.openPanel);
+  const pendingChat = useSelector((s: RootState) => s.chat.pendingChat);
 
-  // Initialize theme on mount and when it changes
   useThemeInitializer();
-
-  // initialise WebSocket for the whole session
-  // hook lives here so it's always connected while on chat page
   useWebSocket();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: fetchRooms,
   });
@@ -34,6 +33,14 @@ const ChatPage = () => {
       dispatch(setRooms(data.data));
     }
   }, [data, dispatch]);
+
+  if (isLoading) {
+    return (
+      <div className='flex h-screen items-center justify-center bg-(--primary-faded)'>
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className='flex h-screen overflow-hidden px-10 py-6 gap-6 bg-(--primary-faded)'>
@@ -49,9 +56,21 @@ const ChatPage = () => {
           <div className='flex h-full items-center justify-center text-slate-500'>
             <Settings/>
           </div>
+        ) : activePanel === 'group-info' ? (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            <GroupInfo/>
+          </div>
+        ) : activePanel === 'saved-message-info' ? (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            <></>
+          </div>
+        ) : activePanel === 'user-info' ? (
+          <div className='flex h-full items-center justify-center text-slate-500'>
+            <UserInfo/>
+          </div>
         ) :
-        activeRoom.roomId ? (
-          <MessageThread roomId={activeRoom.roomId} />
+        (pendingChat || activeRoom.roomId) ? (
+          <MessageThread roomId={activeRoom.roomId ?? undefined} />
         ) : (
           <div className='flex h-full items-center justify-center text-slate-500'>
             Select a conversation

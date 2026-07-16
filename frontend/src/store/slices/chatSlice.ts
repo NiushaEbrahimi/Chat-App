@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Room, Message } from '../../types/chatTypes';
+import type { ChatUser } from '../../types/chatTypes';
 
 interface TypingUser {
   userId: string;
@@ -10,12 +11,22 @@ interface Meta {
   id?: string;
   username?: string;
   avatar?: string | null;
+  avatar_url?: string;
   is_online?: boolean;
   name?: string | null;
-  avatar_url?: string;
+  members?: ChatUser[];
+  is_group?: boolean;
+  is_saved_messages?: boolean;
 }
 
 type MetaType = Meta | null
+
+interface PendingChat {
+  userId: string;
+  username: string;
+  avatar: string | null;
+  is_online: boolean;
+}
 
 interface ChatState {
   theme: "dark" | "light"
@@ -28,6 +39,7 @@ interface ChatState {
   };
   typingUsers: Record<string, TypingUser[]>;
   onlineUserIds: string[];
+  pendingChat: PendingChat | null;
 }
 
 const initialState: ChatState = {
@@ -37,6 +49,15 @@ const initialState: ChatState = {
   activeRoom: { roomId: null, roomType: "user", meta: null },
   typingUsers: {},
   onlineUserIds: [],
+  pendingChat: null,
+};
+
+const sortRoomsByLatestMessage = (rooms: Room[]) => {
+  return [...rooms].sort((a, b) => {
+    const aTime = a.last_message?.created_at ? new Date(a.last_message.created_at).getTime() : 0;
+    const bTime = b.last_message?.created_at ? new Date(b.last_message.created_at).getTime() : 0;
+    return bTime - aTime;
+  });
 };
 
 const chatSlice = createSlice({
@@ -49,13 +70,21 @@ const chatSlice = createSlice({
     },
     // called when React Query fetches the room list
     setRooms: (state, action: PayloadAction<Room[]>) => {
-      state.rooms = action.payload;
+      state.rooms = sortRoomsByLatestMessage(action.payload.map(room => ({
+        ...room,
+        unreadCount: (room as any).unread_count ?? room.unreadCount ?? 0,
+      })));
     },
 
-    setActiveRoom: (state, action: PayloadAction<{ roomId: string; roomType: "group" | "saved_message" | "user"; meta?: MetaType }>) => {
+    setActiveRoom: (state, action: PayloadAction<{ roomId: string | null; roomType: "group" | "saved_message" | "user"; meta?: MetaType }>) => {
       state.activeRoom.roomId = action.payload.roomId;
       state.activeRoom.roomType = action.payload.roomType;
       state.activeRoom.meta = action.payload.meta ?? null;
+
+      const roomIndex = state.rooms.findIndex(room => room.id === action.payload.roomId);
+      if (roomIndex !== -1) {
+        state.rooms[roomIndex].unreadCount = 0;
+      }
     },
 
     // called when React Query fetches message history for a room
@@ -64,22 +93,29 @@ const chatSlice = createSlice({
     },
 
     // called when WebSocket receives a new message
-    addMessage: (state, action: PayloadAction<Message>) => {
-      const { room } = action.payload;
+    addMessage: (state, action: PayloadAction<{ message: Message; isIncoming?: boolean }>) => {
+      const { message, isIncoming = true } = action.payload;
+      const { room } = message;
       if (!state.messages[room]) {
         state.messages[room] = [];
       }
       // avoid duplicates (optimistic update + WS echo)
-      const exists = state.messages[room].some(m => m.id === action.payload.id);
+      const exists = state.messages[room].some(m => m.id === message.id);
       if (!exists) {
-        state.messages[room].push(action.payload);
+        state.messages[room].push(message);
+
+        const roomIndex = state.rooms.findIndex(r => r.id === room);
+        if (roomIndex !== -1) {
+          const targetRoom = state.rooms[roomIndex];
+          targetRoom.last_message = message;
+
+          if (isIncoming && state.activeRoom.roomId !== room) {
+            targetRoom.unreadCount = (targetRoom.unreadCount ?? 0) + 1;
+          }
+        }
       }
 
-      // update last_message in the room list
-      const roomIndex = state.rooms.findIndex(r => r.id === room);
-      if (roomIndex !== -1) {
-        state.rooms[roomIndex].last_message = action.payload;
-      }
+      state.rooms = sortRoomsByLatestMessage(state.rooms);
     },
 
     // called when WebSocket receives typing_indicator
@@ -141,11 +177,15 @@ const chatSlice = createSlice({
         });
       }
     },
+
+    setPendingChat: (state, action: PayloadAction<PendingChat | null>) => {
+      state.pendingChat = action.payload;
+    },
   },
 });
 
 export const {
-  toggleTheme, setRooms, setActiveRoom, setMessages,
+  toggleTheme, setRooms, setActiveRoom, setMessages, setPendingChat,
   addMessage, setTyping, setUserOnline, addReadReceipt,
 } = chatSlice.actions;
 

@@ -4,7 +4,11 @@ import './index.css'
 import { Provider } from "react-redux";
 import App from './App.tsx'
 import { store } from './store/index.ts';
+import { setStoreRef } from './store/slices/authSlice';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Set up store reference for auth slice to listen to localStorage changes
+setStoreRef(store);
 
 const queryClient = new QueryClient({
   defaultOptions: {

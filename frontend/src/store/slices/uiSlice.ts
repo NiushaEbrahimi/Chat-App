@@ -1,9 +1,19 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-export type OpenPanel = "profile" | "settings" | null;
+export type OpenPanel = "profile" | "settings" | "group-info" | "user-info" | "saved-message-info" | null;
 export type TextSize = "small" | "medium" | "large";
 export type ColorTheme = "purple" | "blue" | "pink" | "green" | "orange" | "indigo";
 export type Language = "en" | "es" | "fr" | "de";
+
+type UserPanelInfo = {
+  roomId: string | null;
+  meta: {
+    id: string;
+    username: string;
+    avatar: string | null;
+    is_online: boolean;
+  };
+}
 
 interface UiState {
   openPanel: OpenPanel;
@@ -11,6 +21,7 @@ interface UiState {
   colorTheme: ColorTheme;
   notificationsEnabled: boolean;
   language: Language;
+  userPanelInfo: UserPanelInfo | null;
 }
 
 const getInitialState = (): UiState => {
@@ -20,6 +31,7 @@ const getInitialState = (): UiState => {
     colorTheme: (localStorage.getItem('colorTheme') as ColorTheme) || 'purple',
     notificationsEnabled: localStorage.getItem('notificationsEnabled') !== 'false',
     language: (localStorage.getItem('language') as Language) || 'en',
+    userPanelInfo: null
   };
 };
 
@@ -35,8 +47,20 @@ const uiSlice = createSlice({
     openSettings: (state) => {
       state.openPanel = "settings";
     },
+    openGroupInfo: (state) => {
+      state.openPanel = "group-info";
+    },
+    openUserInfo: (state) => {
+      state.openPanel = "user-info";
+    },
+    openSavedMessgeInfo: (state) => {
+      state.openPanel = "saved-message-info";
+    },
     setPanel: (state, action: PayloadAction<OpenPanel>) => {
       state.openPanel = action.payload;
+    },
+    setUserPanel: (state, action: PayloadAction<UserPanelInfo>) => {
+      state.userPanelInfo = action.payload;
     },
     closePanel: (state) => {
       state.openPanel = null;
@@ -111,5 +135,7 @@ const applyTheme = (theme: ColorTheme) => {
   }
 };
 
-export const { openProfile, openSettings, setPanel, closePanel, setTextSize, setColorTheme, setNotificationsEnabled, setLanguage } = uiSlice.actions;
+export const { openProfile, openSettings, openGroupInfo, openSavedMessgeInfo, openUserInfo,
+              setPanel, closePanel, setUserPanel, setTextSize, setColorTheme, setNotificationsEnabled, setLanguage
+            } = uiSlice.actions;
 export default uiSlice.reducer;

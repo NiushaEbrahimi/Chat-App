@@ -6,6 +6,7 @@ import UserAvatar from '../../shared/UserAvatar';
 import { useDispatch } from 'react-redux';
 import { login } from '../../store/slices/authSlice';
 import { resolveAvatarUrl } from '../../utils/resolveAvatarUrl';
+import type { ApiError } from '../../types/errorTypes';
 
 export default function ProfileEdit() {
   const { user } = useAuth();
@@ -60,9 +61,18 @@ export default function ProfileEdit() {
       setTimeout(() => setSuccessMessage(''), 3000);
       queryClient.invalidateQueries({ queryKey: ['me'] });
     },
-    onError: (error: any) => {
-      const errorData = error.response?.data || {};
-      setErrors(errorData);
+    onError: (error: ApiError) => {
+      const data = error.response?.data;
+      const fieldErrors: Record<string, string> = {};
+      if (data?.errors) {
+        Object.entries(data.errors).forEach(([key, msgs]) => {
+          fieldErrors[key] = msgs.join(', ');
+        });
+      }
+      if (data?.detail) {
+        fieldErrors.general = data.detail;
+      }
+      setErrors(fieldErrors);
       console.error('Update failed:', error);
     },
   });
@@ -174,7 +184,7 @@ export default function ProfileEdit() {
             <button
             type='submit'
             disabled={updateMutation.isPending}
-            className='mt-4 px-6 py-3 rounded-[14px] bg-(--primary) text-white font-semibold uppercase tracking-wide transition hover:bg-(--secondary) disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[48px]'
+            className='mt-4 px-6 py-3 rounded-[14px] bg-(--primary) text-white font-semibold uppercase tracking-wide transition hover:bg-(--secondary) disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-(48px)'
             >
             {updateMutation.isPending ? (
                 <>

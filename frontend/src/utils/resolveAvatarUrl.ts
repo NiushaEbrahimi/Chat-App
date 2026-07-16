@@ -1,6 +1,4 @@
 export const resolveAvatarUrl = (avatar: string | null | undefined): string | undefined => {
-  console.log("avatar")
-  console.log(avatar)
   if (!avatar) return undefined;
   
   // If it's already a full URL (starts with http/https), return as-is

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from './useAuth';
 import {
   addMessage, setTyping, setUserOnline, addReadReceipt
 } from '../store/slices/chatSlice';
 import type { Message } from '../types/chatTypes';
+import type { RootState } from '../store';
 
 const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8000';
 
@@ -15,6 +16,7 @@ const getBackoffDelay = (attempt: number) =>
 export const useWebSocket = () => {
   const dispatch = useDispatch();
   const { token, isAuthenticated } = useAuth();
+  const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempt = useRef(0);
   const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -41,22 +43,25 @@ export const useWebSocket = () => {
         case 'new_message':
           // WebSocket received a new message — add it to Redux
           dispatch(addMessage({
-            id: data.message_id,
-            room: data.room_id,
-            sender: {
-              id: data.sender_id,
-              username: data.sender_username,
-              avatar: null,
-              is_online: true,
-            },
-            content: data.content,
-            message_type: 'text',
-            attachment: null,
-            is_edited: false,
-            created_at: data.created_at,
-            reads: [],
-            reactions: [],
-          } as Message));
+            message: {
+              id: data.message_id,
+              room: data.room_id,
+              sender: {
+                id: data.sender_id,
+                username: data.sender_username,
+                avatar: null,
+                is_online: true,
+              },
+              content: data.content,
+              message_type: 'text',
+              attachment: null,
+              is_edited: false,
+              created_at: data.created_at,
+              reads: [],
+              reactions: [],
+            } as Message,
+            isIncoming: data.sender_id !== currentUserId,
+          }));
           break;
 
         case 'typing_indicator':
@@ -86,7 +91,7 @@ export const useWebSocket = () => {
     } catch {
       console.error('Failed to parse WebSocket message');
     }
-  }, [dispatch]);
+  }, [dispatch, currentUserId]);
 
   const setupHeartbeat = useCallback(() => {
     // Clear existing heartbeat
@@ -124,7 +129,6 @@ export const useWebSocket = () => {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
       reconnectAttempt.current = 0;  // reset backoff on successful connect
       setupHeartbeat();  // Start sending pings
     };
@@ -147,7 +151,6 @@ export const useWebSocket = () => {
 
       // anything else — reconnect with exponential backoff
       const delay = getBackoffDelay(reconnectAttempt.current);
-      console.log(`WS disconnected (code: ${event.code}). Reconnecting in ${delay}ms...`);
 
       reconnectTimeout.current = setTimeout(() => {
         reconnectAttempt.current += 1;
